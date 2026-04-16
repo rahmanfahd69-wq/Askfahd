@@ -413,34 +413,6 @@ function Generating(){
   return(<Shell><Logo/><div style={{textAlign:"center",paddingTop:"80px"}}><div className="spinner" style={{marginBottom:"32px"}}></div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:"20px",marginBottom:"12px"}}>GENERATING YOUR PLAN</div><div style={{fontSize:"14px",color:"var(--fire-light)",animation:"fadeIn 0.4s ease both"}} key={mi}>{ms[mi]}</div><p style={{fontSize:"12px",color:"var(--text-muted)",marginTop:"24px"}}>This takes 15-30 seconds — AI is building everything from scratch for you.</p></div></Shell>);
 }
 
-// ── Email Gate ──
-function EmailGate({plan,onUnlock,onBack}){
-  const[email,setEmail]=useState("");const[sub,setSub]=useState(false);
-  const ok=email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
-  const go=()=>{if(!ok)return;console.log("Email:",email);setSub(true);setTimeout(()=>onUnlock(email),600);};
-
-  return(<Shell><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"48px"}}><Logo onClick={onBack}/><button className="btn-secondary" onClick={onBack} style={{padding:"10px 20px",fontSize:"12px"}}>← BACK</button></div><STitle t={`${plan.name.toUpperCase()}, YOUR PLAN IS READY`} s="One more step to unlock your full personalised program"/>
-    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:"10px",marginBottom:"32px"}}>
-      {[["BMI",plan.bmi],["BMR",plan.bmr],["TDEE",plan.tdee],["TARGET",plan.calorieTarget]].map(([l,v],i)=>(<div key={i} className="stat-card" style={{animation:`fadeUp 0.5s ease ${i*0.08}s both`}}><div style={{fontSize:"10px",letterSpacing:"2px",color:"var(--text-muted)",marginBottom:"6px",fontWeight:600}}>{l}</div><div style={{fontFamily:"'Syne',sans-serif",fontSize:"28px",fontWeight:800,color:"var(--fire)"}}>{v}</div>{l!=="BMI"&&<div style={{fontSize:"11px",color:"var(--text-muted)"}}>kcal/day</div>}</div>))}
-    </div>
-    <div style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius)",padding:"24px",marginBottom:"24px"}}>
-      <div style={{fontSize:"14px",lineHeight:1.7,color:"var(--text-secondary)"}}>
-        <span style={{color:"var(--fire)",fontWeight:600}}>Split:</span> {plan.split} ({plan.trainingDays}x/week) · <span style={{color:"var(--fire)",fontWeight:600}}>Rest:</span> {plan.restDays}<br/>
-        <span style={{color:"var(--fire)",fontWeight:600}}>Macros:</span> {plan.protein}g protein · {plan.carbs}g carbs · {plan.fats}g fats
-      </div>
-      {plan.planNotes?.length>0&&(<div style={{marginTop:"14px",padding:"12px 14px",background:"rgba(255,255,255,0.02)",borderRadius:"var(--radius-xs)",border:"1px solid var(--border)"}}>{plan.planNotes.map((n,i)=>(<div key={i} style={{fontSize:"13px",color:"var(--text-muted)",lineHeight:1.6,marginBottom:i<plan.planNotes.length-1?"6px":0}}>• {n}</div>))}</div>)}
-    </div>
-    <div style={{background:"rgba(255,87,34,0.04)",border:"1px solid rgba(255,87,34,0.15)",borderRadius:"var(--radius)",padding:"28px",textAlign:"center"}}>
-      <div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:"18px",marginBottom:"8px"}}>Unlock Your Full Plan</div>
-      <p style={{fontSize:"13px",color:"var(--text-secondary)",marginBottom:"20px",lineHeight:1.6}}>Enter your email to access your complete workout chart, meal plan, recovery protocol, and schedule. No spam — just your plan.</p>
-      <div style={{display:"flex",gap:"10px",maxWidth:"420px",margin:"0 auto"}}>
-        <input className="input-field" type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")go();}} placeholder="your@email.com" style={{flex:1}}/>
-        <button className="btn-primary" disabled={!ok||sub} onClick={go} style={{padding:"14px 24px",whiteSpace:"nowrap"}}>{sub?"✓":"UNLOCK"}</button>
-      </div>
-      <p style={{fontSize:"11px",color:"var(--text-muted)",marginTop:"12px"}}>We respect your privacy. Unsubscribe anytime.</p>
-    </div>
-  </Shell>);
-}
 
 // ── Plan View ──
 function Plan({plan,onBack,onRetake}){
