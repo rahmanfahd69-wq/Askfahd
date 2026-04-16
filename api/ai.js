@@ -33,8 +33,8 @@ export default async function handler(req, res) {
     "https://askfahd.vercel.app",
   ];
   const origin = req.headers.origin || "";
-  // Allow any vercel preview URLs too
-  const isAllowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || origin.includes(".vercel.app") || origin === "";
+  // Allow exact matches + your project's preview URLs (askfahd-*.vercel.app)
+  const isAllowed = ALLOWED_ORIGINS.some(o => origin.startsWith(o)) || origin.match(/^https:\/\/askfahd-[a-z0-9]+\.vercel\.app$/) || origin === "";
   const corsOrigin = isAllowed ? origin || "*" : ALLOWED_ORIGINS[0];
 
   res.setHeader("Access-Control-Allow-Origin", corsOrigin);
