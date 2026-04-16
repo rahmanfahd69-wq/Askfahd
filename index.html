@@ -176,9 +176,9 @@ Fill all 7 days. 4-6 exercises on training days. Empty exercises array on rest d
 }
 
 function buildChatSys(plan){
-  return `You are Ask Fahd — the AI fitness coach inside FARfit. Built by Fahd Rahman, natural athlete and entrepreneur in Dubai.
+  return `You are Ask Fahd — the AI fitness coach inside FARfit. Built by Fahd, a natural athlete and coach in Dubai.
 
-Style: direct, no-fluff, practical. Talk like a knowledgeable coach not a textbook. Under 150 words unless detailed breakdown requested.
+Style: direct, no-fluff, practical. Talk like a real coach. Keep responses concise (under 150 words unless detailed plan requested). Use bullet points with - for lists. Use **bold** only for key terms. Never use headings with # or ##. Keep formatting minimal and clean.
 
 Cover: training, nutrition, recovery, sleep, stress, injury prevention, mobility, running, functional fitness, time management.
 
@@ -253,7 +253,7 @@ function Landing({onStart,onAbout,onChat}){
 function About({onBack,onStart,onChat}){
   return(<Shell><Logo onClick={onBack}/><STitle t="ABOUT FAHD" s="The person behind FARfit"/>
     <div style={{fontSize:"15px",lineHeight:1.85,color:"var(--text-secondary)",marginBottom:"32px"}}>
-      <p style={{marginBottom:"16px"}}>I'm Fahd — a natural athlete, entrepreneur, and fitness coach based in Dubai. I train busy professionals who work 8-12 hour days and still want to build a strong, functional body without living in a gym.</p>
+      <p style={{marginBottom:"16px"}}>I'm Fahd — a natural athlete, entrepreneur, and fitness coach based in Dubai. I train busy professionals who work 10-14 hour days and still want to build a strong, functional body without living in a gym.</p>
       <p style={{marginBottom:"16px"}}>My approach is practical, not perfect. Functional strength, mobility, bodyweight mastery, smart nutrition, and recovery protocols that actually fit into a demanding schedule. No bro-science. No cookie-cutter plans. Every recommendation is built around your real life — your sleep, your stress, your injuries, your diet, your time.</p>
       <p style={{marginBottom:"16px"}}>I built FARfit because most fitness apps ignore context. They hand you a generic 12-week plan and expect you to figure out the rest. FARfit uses AI to build a genuinely personalised program in minutes — one that adapts to whether you slept 4 hours or 8, whether you have a shoulder injury or a full gym, whether you're vegan or keto.</p>
       <p>The assessment and plan are free. If you want deeper coaching — weekly check-ins, plan adjustments, direct access — that option exists too.</p>
@@ -264,6 +264,54 @@ function About({onBack,onStart,onChat}){
       <button className="btn-secondary" onClick={onBack}>← BACK</button>
     </div>
   </Shell>);
+}
+
+// ── Markdown renderer ──
+function RenderMd({text}){
+  if(!text)return null;
+  const parts=text.split('\n').filter(l=>l!==undefined);
+  const elements=[];
+  parts.forEach((line,i)=>{
+    // Process inline markdown
+    let processed=line;
+    // Bold **text** or __text__
+    const boldParts=[];
+    let remaining=processed;
+    while(remaining.length>0){
+      const boldMatch=remaining.match(/\*\*(.+?)\*\*|__(.+?)__/);
+      if(boldMatch){
+        const idx=remaining.indexOf(boldMatch[0]);
+        if(idx>0)boldParts.push(remaining.substring(0,idx));
+        boldParts.push(React.createElement('strong',{key:`b${i}-${boldParts.length}`,style:{color:"var(--fire-light)",fontWeight:600}},boldMatch[1]||boldMatch[2]));
+        remaining=remaining.substring(idx+boldMatch[0].length);
+      }else{
+        boldParts.push(remaining);
+        remaining="";
+      }
+    }
+    // Bullet points
+    const trimmed=line.trim();
+    if(trimmed.startsWith('- ')||trimmed.startsWith('* ')||trimmed.match(/^\d+\.\s/)){
+      const bulletText=trimmed.replace(/^[-*]\s/,'').replace(/^\d+\.\s/,'');
+      // Re-process bold in bullet
+      const bParts=[];
+      let rem=bulletText;
+      while(rem.length>0){
+        const bm=rem.match(/\*\*(.+?)\*\*/);
+        if(bm){const idx=rem.indexOf(bm[0]);if(idx>0)bParts.push(rem.substring(0,idx));bParts.push(React.createElement('strong',{key:`bb${i}-${bParts.length}`,style:{color:"var(--fire-light)",fontWeight:600}},bm[1]));rem=rem.substring(idx+bm[0].length);}
+        else{bParts.push(rem);rem="";}
+      }
+      elements.push(React.createElement('div',{key:i,style:{display:"flex",gap:"8px",marginBottom:"4px",paddingLeft:"4px"}},
+        React.createElement('span',{style:{color:"var(--fire)",flexShrink:0}},"•"),
+        React.createElement('span',null,...bParts)
+      ));
+    }else if(trimmed===""){
+      elements.push(React.createElement('div',{key:i,style:{height:"8px"}}));
+    }else{
+      elements.push(React.createElement('div',{key:i,style:{marginBottom:"4px"}},...boldParts));
+    }
+  });
+  return React.createElement('div',null,...elements);
 }
 
 // ── Chat ──
@@ -296,7 +344,7 @@ function Chat({plan}){
 
   return(<div>
     <div ref={ref} style={{minHeight:"300px",maxHeight:"460px",overflowY:"auto",padding:"20px",borderRadius:"var(--radius)",background:"var(--bg-card)",border:"1px solid var(--border)",marginBottom:"16px",display:"flex",flexDirection:"column",gap:"14px"}}>
-      {msgs.map((m,i)=>(<div key={i} className={`chat-bubble ${m.sender==='user'?'user':'fahd'}`} style={{animation:`slideIn 0.3s ease ${Math.min(i*0.05,0.3)}s both`}}>{m.text}</div>))}
+      {msgs.map((m,i)=>(<div key={i} className={`chat-bubble ${m.sender==='user'?'user':'fahd'}`} style={{animation:`slideIn 0.3s ease ${Math.min(i*0.05,0.3)}s both`}}>{m.sender==='fahd'?React.createElement(RenderMd,{text:m.text}):m.text}</div>))}
       {loading&&(<div className="chat-bubble fahd dots-loading" style={{padding:"16px 22px"}}><span></span><span></span><span></span></div>)}
     </div>
     {limitInfo?(<div style={{padding:"28px",background:"rgba(255,87,34,0.06)",border:"1px solid rgba(255,87,34,0.2)",borderRadius:"var(--radius)",textAlign:"center"}}>
