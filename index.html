@@ -39,7 +39,7 @@
       @media(max-width:600px){.tab-btn{padding:10px 10px;font-size:10px;letter-spacing:1px}}
       .chat-bubble{max-width:88%;padding:14px 18px;border-radius:18px;font-size:14px;line-height:1.7;word-wrap:break-word;white-space:pre-wrap}
       .chat-bubble.user{background:rgba(255,87,34,0.12);border:1px solid rgba(255,87,34,0.15);align-self:flex-end;border-bottom-right-radius:4px}
-      .chat-bubble.fahd{background:var(--bg-card);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+      .chat-bubble.fahd{background:var(--bg-card);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px;white-space:normal}
       .stat-card{background:var(--bg-card);border:1px solid var(--border);padding:20px;text-align:center;border-radius:var(--radius-sm);transition:all 0.3s ease}
       .stat-card:hover{border-color:var(--border-active);transform:translateY(-2px)}
       .pricing-card{border:1px solid var(--border);padding:32px;background:var(--bg-card);border-radius:var(--radius);transition:all 0.3s ease}
@@ -253,7 +253,7 @@ function Landing({onStart,onAbout,onChat}){
 function About({onBack,onStart,onChat}){
   return(<Shell><Logo onClick={onBack}/><STitle t="ABOUT FAHD" s="The person behind FARfit"/>
     <div style={{fontSize:"15px",lineHeight:1.85,color:"var(--text-secondary)",marginBottom:"32px"}}>
-      <p style={{marginBottom:"16px"}}>I'm Fahd — a natural athlete, entrepreneur, and fitness coach based in Dubai. I train busy professionals who work 9-12 hour days and still want to build a strong, functional body without living in a gym.</p>
+      <p style={{marginBottom:"16px"}}>I'm Fahd — a natural athlete, entrepreneur, and fitness coach based in Dubai. I train busy professionals who work 10-14 hour days and still want to build a strong, functional body without living in a gym.</p>
       <p style={{marginBottom:"16px"}}>My approach is practical, not perfect. Functional strength, mobility, bodyweight mastery, smart nutrition, and recovery protocols that actually fit into a demanding schedule. No bro-science. No cookie-cutter plans. Every recommendation is built around your real life — your sleep, your stress, your injuries, your diet, your time.</p>
       <p style={{marginBottom:"16px"}}>I built FARfit because most fitness apps ignore context. They hand you a generic 12-week plan and expect you to figure out the rest. FARfit uses AI to build a genuinely personalised program in minutes — one that adapts to whether you slept 4 hours or 8, whether you have a shoulder injury or a full gym, whether you're vegan or keto.</p>
       <p>The assessment and plan are free. If you want deeper coaching — weekly check-ins, plan adjustments, direct access — that option exists too.</p>
@@ -353,18 +353,10 @@ function Chat({plan}){
       <p style={{fontSize:"13px",color:"var(--text-muted)",marginBottom:"20px"}}>Next free messages available in <strong style={{color:"var(--fire)"}}>{limitInfo.wait}</strong></p>
 
       <div style={{display:"flex",gap:"10px",justifyContent:"center",flexWrap:"wrap",marginBottom:"20px"}}>
-        <div style={{flex:"1",minWidth:"200px",maxWidth:"260px",padding:"20px",background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-sm)",textAlign:"center"}}>
-          <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"11px",letterSpacing:"2px",color:"var(--fire)",marginBottom:"4px"}}>PRO</div>
-          <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"24px",marginBottom:"8px"}}>$9.99<span style={{fontSize:"12px",color:"var(--text-muted)"}}>/mo</span></div>
-          <div style={{fontSize:"12px",color:"var(--text-secondary)",lineHeight:1.6,marginBottom:"14px"}}>50 messages/day<br/>Weekly plan updates<br/>Progress tracking</div>
-          <button className="btn-primary" style={{width:"100%",fontSize:"11px",padding:"12px"}}>UPGRADE TO PRO</button>
-        </div>
-        <div style={{flex:"1",minWidth:"200px",maxWidth:"260px",padding:"20px",background:"rgba(255,87,34,0.04)",border:"2px solid var(--fire)",borderRadius:"var(--radius-sm)",textAlign:"center",position:"relative"}}>
-          <div style={{position:"absolute",top:"-1px",right:"14px",background:"var(--fire)",padding:"2px 8px",borderRadius:"0 0 6px 6px",fontSize:"9px",fontWeight:700,letterSpacing:"1px"}}>BEST VALUE</div>
-          <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"11px",letterSpacing:"2px",color:"var(--fire)",marginBottom:"4px"}}>MAX</div>
-          <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"24px",marginBottom:"8px"}}>$29.99<span style={{fontSize:"12px",color:"var(--text-muted)"}}>/mo</span></div>
-          <div style={{fontSize:"12px",color:"var(--text-secondary)",lineHeight:1.6,marginBottom:"14px"}}>Unlimited messages<br/>1-on-1 coaching<br/>WhatsApp access</div>
-          <button className="btn-primary" style={{width:"100%",fontSize:"11px",padding:"12px"}}>GO UNLIMITED</button>
+        <div style={{maxWidth:"340px",padding:"24px",background:"rgba(255,87,34,0.04)",border:"2px solid var(--fire)",borderRadius:"var(--radius-sm)",textAlign:"center",position:"relative"}}>
+          <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"11px",letterSpacing:"2px",color:"var(--fire)",marginBottom:"8px"}}>PRO COACHING</div>
+          <div style={{fontSize:"13px",color:"var(--text-secondary)",lineHeight:1.7,marginBottom:"16px"}}>Unlimited AI chat access<br/>Weekly plan updates<br/>Direct WhatsApp coaching<br/>Form checks and accountability</div>
+          <a href="https://wa.me/971555262271?text=Hi%20Fahd%2C%20I%20just%20tried%20FARfit%20and%20I%27m%20interested%20in%20Pro%20Coaching." target="_blank" rel="noopener noreferrer" style={{textDecoration:"none"}}><button className="btn-primary" style={{width:"100%",fontSize:"12px",padding:"14px"}}>MESSAGE FAHD TO UPGRADE</button></a>
         </div>
       </div>
 
@@ -499,12 +491,28 @@ function Plan({plan,onBack,onRetake}){
 
     {tab==="chat"&&<Chat plan={plan}/>}
 
-    <div style={{marginTop:"40px",padding:"32px",borderRadius:"var(--radius)",background:"rgba(255,87,34,0.04)",border:"1px solid rgba(255,87,34,0.12)",textAlign:"center"}}>
-      <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"22px",marginBottom:"10px"}}>WANT DEEPER COACHING?</div>
-      <p style={{fontSize:"14px",color:"var(--text-secondary)",lineHeight:1.7,marginBottom:"20px",maxWidth:"420px",margin:"0 auto 20px"}}>Weekly plan updates, direct WhatsApp access to Fahd, progress reviews, and accountability check-ins.</p>
-      <div style={{display:"flex",gap:"12px",justifyContent:"center",flexWrap:"wrap"}}>
-        <div className="pricing-card" style={{maxWidth:"220px",padding:"24px"}}><div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"11px",letterSpacing:"2px",color:"var(--text-muted)",marginBottom:"6px"}}>PRO</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"32px",marginBottom:"12px"}}>$9.99<span style={{fontSize:"14px",color:"var(--text-muted)"}}>/mo</span></div><div style={{fontSize:"12px",color:"var(--text-secondary)",lineHeight:1.7,marginBottom:"16px"}}>Weekly plan updates<br/>AI coaching chat<br/>Progress tracking</div><button className="btn-secondary" style={{width:"100%",fontSize:"11px"}}>COMING SOON</button></div>
-        <div className="pricing-card featured" style={{maxWidth:"220px",padding:"24px"}}><div style={{position:"absolute",top:"-1px",right:"16px",background:"var(--fire)",padding:"3px 10px",borderRadius:"0 0 6px 6px",fontSize:"9px",fontWeight:700,letterSpacing:"1px"}}>POPULAR</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"11px",letterSpacing:"2px",color:"var(--fire)",marginBottom:"6px"}}>ELITE</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"32px",marginBottom:"12px"}}>$29.99<span style={{fontSize:"14px",color:"var(--text-muted)"}}>/mo</span></div><div style={{fontSize:"12px",color:"var(--text-secondary)",lineHeight:1.7,marginBottom:"16px"}}>1-on-1 coaching (2x/mo)<br/>WhatsApp access<br/>Custom supplements</div><button className="btn-primary" style={{width:"100%",fontSize:"11px",padding:"12px"}}>COMING SOON</button></div>
+    {/* Testimonials */}
+    <div style={{marginTop:"40px",marginBottom:"24px"}}>
+      <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"16px",letterSpacing:"2px",color:"var(--text-muted)",marginBottom:"20px",textAlign:"center"}}>REAL RESULTS</div>
+      <div style={{display:"flex",gap:"16px",flexWrap:"wrap",justifyContent:"center"}}>
+        <div style={{maxWidth:"360px",width:"100%",background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-sm)",overflow:"hidden"}}>
+          <div style={{display:"flex",gap:"2px"}}>
+            <div style={{flex:1,position:"relative"}}><img src="https://i.postimg.cc/rm627TbF/PHOTO-2024-02-11-22-45-28.jpg" style={{width:"100%",height:"220px",objectFit:"cover"}} alt="Before"/><div style={{position:"absolute",bottom:"8px",left:"8px",background:"rgba(0,0,0,0.7)",padding:"4px 10px",borderRadius:"4px",fontSize:"11px",fontWeight:700,letterSpacing:"1.5px"}}>BEFORE</div></div>
+            <div style={{flex:1,position:"relative"}}><img src="https://i.postimg.cc/1tx1bST3/PHOTO-2024-02-11-22-45-50.jpg" style={{width:"100%",height:"220px",objectFit:"cover"}} alt="After"/><div style={{position:"absolute",bottom:"8px",left:"8px",background:"var(--fire)",padding:"4px 10px",borderRadius:"4px",fontSize:"11px",fontWeight:700,letterSpacing:"1.5px"}}>AFTER</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Direct coaching CTA */}
+    <div style={{padding:"32px",borderRadius:"var(--radius)",background:"rgba(255,87,34,0.04)",border:"1px solid rgba(255,87,34,0.12)",textAlign:"center"}}>
+      <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"22px",marginBottom:"10px"}}>WANT 1-ON-1 COACHING?</div>
+      <p style={{fontSize:"14px",color:"var(--text-secondary)",lineHeight:1.7,marginBottom:"8px",maxWidth:"460px",margin:"0 auto 8px"}}>Get personalised weekly plan updates, direct WhatsApp access, form checks, accountability, and real-time adjustments based on your progress.</p>
+      <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"28px",color:"var(--fire)",marginBottom:"16px"}}>PRO COACHING</div>
+      <p style={{fontSize:"13px",color:"var(--text-muted)",marginBottom:"20px"}}>Limited spots available. Message me directly to get started.</p>
+      <div style={{display:"flex",gap:"10px",justifyContent:"center",flexWrap:"wrap"}}>
+        <a href="https://wa.me/971555262271?text=Hi%20Fahd%2C%20I%20just%20tried%20FARfit%20and%20I%27m%20interested%20in%20Pro%20Coaching." target="_blank" rel="noopener noreferrer" style={{textDecoration:"none"}}><button className="btn-primary" style={{fontSize:"13px",padding:"16px 32px"}}>MESSAGE ON WHATSAPP</button></a>
+        <a href="https://www.instagram.com/fahd.rhmn" target="_blank" rel="noopener noreferrer" style={{textDecoration:"none"}}><button className="btn-secondary" style={{fontSize:"12px",padding:"14px 24px"}}>DM ON INSTAGRAM</button></a>
       </div>
     </div>
   </Shell>);
@@ -524,15 +532,14 @@ function App(){
   const onAssess=async(d)=>{
     setAssessment(d);setPhase("generating");
     const p=await generateAIPlan(profile,d);
-    if(p){setPlan(p);setPhase("email-gate");}else{setPhase("error");}
+    if(p){setPlan(p);setPhase("plan");}else{setPhase("error");}
   };
   const onRetry=async()=>{
     if(!profile||!assessment){setPhase("onboarding");return;}
     setPhase("generating");
     const p=await generateAIPlan(profile,assessment);
-    if(p){setPlan(p);setPhase("email-gate");}else{setPhase("error");}
+    if(p){setPlan(p);setPhase("plan");}else{setPhase("error");}
   };
-  const onEmail=(e)=>{setPhase("plan");};
   const goHome=()=>setPhase("landing");
 
   return(<div>
@@ -543,7 +550,6 @@ function App(){
     {phase==="assessment"&&<Assess onDone={onAssess} onBack={()=>setPhase("onboarding")}/>}
     {phase==="generating"&&<Generating/>}
     {phase==="error"&&<Err onRetry={onRetry}/>}
-    {phase==="email-gate"&&plan&&<EmailGate plan={plan} onUnlock={onEmail} onBack={goHome}/>}
     {phase==="plan"&&plan&&<Plan plan={plan} onBack={goHome} onRetake={()=>{setPlan(null);setProfile(null);setAssessment(null);setPhase("onboarding");}}/>}
   </div>);
 }
