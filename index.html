@@ -65,9 +65,19 @@ const SL=["Low","Moderate","High","Very High"];
 const WH=["< 6 hours","6-8 hours","8-10 hours","10-12 hours","12+ hours"];
 const INJ=["None","Lower back","Shoulder","Knee","Wrist/Elbow","Neck","Hip","Ankle","Pec/Chest","Other"];
 
-// Get admin key from URL param ?admin=yourkey
+// Admin key: visit site with ?admin=yourkey once, it stores for the session
 function getAdminKey(){
-  try{const p=new URLSearchParams(window.location.search);return p.get('admin')||"";}catch(e){return"";}
+  try{
+    const p=new URLSearchParams(window.location.search);
+    const fromUrl=p.get('admin');
+    if(fromUrl){
+      sessionStorage.setItem('_fak',fromUrl);
+      // Clean URL so key isn't visible in browser bar
+      window.history.replaceState({},'',window.location.pathname);
+      return fromUrl;
+    }
+    return sessionStorage.getItem('_fak')||"";
+  }catch(e){return"";}
 }
 
 async function callClaude(sys,usr,mt=4000,model="claude-sonnet-4-20250514"){
@@ -200,7 +210,7 @@ function genPlanText(p){
   t+=`\nProtein: ${p.meals?.proteinSources}\nCarbs: ${p.meals?.carbSources}\nFats: ${p.meals?.fatSources}`;
   t+=`\n\nRECOVERY\n${"─".repeat(40)}\n`;(p.recovery||[]).forEach((r,i)=>{t+=`${i+1}. ${r}\n`;});
   t+=`\nSCHEDULE\n${"─".repeat(40)}\n`;(p.timeAdvice||[]).forEach(a=>{t+=`→ ${a}\n`;});
-  t+=`\n\n${"═".repeat(50)}\nFARfit — askfahd.netlify.app\nBuilt by Fahd Rahman\n`;
+  t+=`\n\n${"═".repeat(50)}\nFARfit — askfahd.vercel.app\nBuilt by Fahd Rahman\n`;
   return t;
 }
 
@@ -243,11 +253,10 @@ function Landing({onStart,onAbout,onChat}){
 function About({onBack,onStart,onChat}){
   return(<Shell><Logo onClick={onBack}/><STitle t="ABOUT FAHD" s="The person behind FARfit"/>
     <div style={{fontSize:"15px",lineHeight:1.85,color:"var(--text-secondary)",marginBottom:"32px"}}>
-      <p style={{marginBottom:"16px"}}>I'm Fahd Rahman — a natural athlete, entrepreneur, and operational CEO based in Dubai. I grew up running businesses alongside my father in Kerala, from juice shops and café chains to construction and advertising. That grind taught me what discipline actually looks like before I ever touched a barbell.</p>
-      <p style={{marginBottom:"16px"}}>After completing my Master's in the UK (where I worked my way up to supervisor in hospitality), I moved to Dubai to lead Aurion — a startup investment company with stakes across photo studios, cafés, gyms, a kindergarten, and food production.</p>
-      <p style={{marginBottom:"16px"}}>I built FARfit because I was tired of seeing busy professionals — people like me — waste time on generic programs that don't account for real life: 12-hour work days, injuries, stress, bad sleep, dietary restrictions. The fitness industry sells perfection. I coach reality.</p>
-      <p style={{marginBottom:"16px"}}>My approach is functional — kettlebells, carries, bodyweight mastery, running, mobility — blended with smart nutrition and recovery. Currently training through an injury myself, so I understand rehab programming from the inside.</p>
-      <p>FARfit is free. My philosophy: give people the tools first. If you want deeper coaching, we can talk.</p>
+      <p style={{marginBottom:"16px"}}>I'm Fahd — a natural athlete, entrepreneur, and fitness coach based in Dubai. I train busy professionals who work 10-14 hour days and still want to build a strong, functional body without living in a gym.</p>
+      <p style={{marginBottom:"16px"}}>My approach is practical, not perfect. Functional strength, mobility, bodyweight mastery, smart nutrition, and recovery protocols that actually fit into a demanding schedule. No bro-science. No cookie-cutter plans. Every recommendation is built around your real life — your sleep, your stress, your injuries, your diet, your time.</p>
+      <p style={{marginBottom:"16px"}}>I built FARfit because most fitness apps ignore context. They hand you a generic 12-week plan and expect you to figure out the rest. FARfit uses AI to build a genuinely personalised program in minutes — one that adapts to whether you slept 4 hours or 8, whether you have a shoulder injury or a full gym, whether you're vegan or keto.</p>
+      <p>The assessment and plan are free. If you want deeper coaching — weekly check-ins, plan adjustments, direct access — that option exists too.</p>
     </div>
     <div style={{display:"flex",gap:"10px",flexWrap:"wrap"}}>
       <button className="btn-primary" onClick={onStart}>START ASSESSMENT</button>
@@ -394,13 +403,13 @@ function EmailGate({plan,onUnlock,onBack}){
 }
 
 // ── Plan View ──
-function Plan({plan,onBack}){
+function Plan({plan,onBack,onRetake}){
   const[tab,setTab]=useState("workout");
   const tabs=[{id:"workout",l:"WORKOUT"},{id:"nutrition",l:"NUTRITION"},{id:"recovery",l:"RECOVERY"},{id:"schedule",l:"SCHEDULE"},{id:"chat",l:"ASK FAHD"}];
   const ms=plan.meals?.schedule||plan.meals?.meals||[];
 
   return(<Shell>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"48px"}}><Logo onClick={onBack}/><div style={{display:"flex",gap:"8px"}}><button className="btn-secondary" onClick={onBack} style={{padding:"10px 18px",fontSize:"11px"}}>← HOME</button><button className="btn-secondary" onClick={()=>dlPlan(plan)} style={{padding:"10px 18px",fontSize:"11px"}}>↓ DOWNLOAD</button></div></div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"48px"}}><Logo onClick={onBack}/><div style={{display:"flex",gap:"8px",flexWrap:"wrap"}}><button className="btn-secondary" onClick={onRetake} style={{padding:"10px 18px",fontSize:"11px"}}>↻ RETAKE</button><button className="btn-secondary" onClick={()=>dlPlan(plan)} style={{padding:"10px 18px",fontSize:"11px"}}>↓ DOWNLOAD</button></div></div>
     <STitle t="YOUR PERSONALISED PLAN" s={`${plan.split} · ${plan.trainingDays}x/week · ${plan.calorieTarget} kcal`}/>
 
     <div style={{display:"flex",gap:"0",marginBottom:"32px",borderBottom:"1px solid var(--border)",overflowX:"auto"}}>
@@ -487,7 +496,7 @@ function App(){
     {phase==="generating"&&<Generating/>}
     {phase==="error"&&<Err onRetry={onRetry}/>}
     {phase==="email-gate"&&plan&&<EmailGate plan={plan} onUnlock={onEmail} onBack={goHome}/>}
-    {phase==="plan"&&plan&&<Plan plan={plan} onBack={goHome}/>}
+    {phase==="plan"&&plan&&<Plan plan={plan} onBack={goHome} onRetake={()=>{setPlan(null);setProfile(null);setAssessment(null);setPhase("onboarding");}}/>}
   </div>);
 }
 
