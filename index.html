@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FARfit — Your AI Coach by Fahd</title>
+    <meta name="description" content="Free AI-powered fitness assessment and personalised training plans for busy professionals. Built by Fahd Rahman." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      :root{--fire:#FF5722;--fire-light:#FF8A65;--fire-dark:#E64A19;--ember:#FF9100;--bg-deep:#050505;--bg-card:rgba(255,255,255,0.028);--bg-card-hover:rgba(255,255,255,0.05);--border:rgba(255,255,255,0.07);--border-active:rgba(255,87,34,0.4);--text-primary:rgba(255,255,255,0.92);--text-secondary:rgba(255,255,255,0.55);--text-muted:rgba(255,255,255,0.3);--radius:16px;--radius-sm:10px;--radius-xs:6px}
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{background:var(--bg-deep);color:var(--text-primary);font-family:'Outfit',sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+      button,input,textarea,select{font-family:inherit}
+      ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(255,87,34,0.25);border-radius:10px}
+      ::selection{background:rgba(255,87,34,0.25)}
+      input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+      input[type=number]{-moz-appearance:textfield}
+      @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+      @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+      @keyframes slideIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+      @keyframes dotPulse{0%,80%,100%{transform:scale(0.6);opacity:0.3}40%{transform:scale(1);opacity:1}}
+      @keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+      .grain::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:9999}
+      .chip{font-size:13.5px;font-weight:500;padding:10px 18px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-secondary);cursor:pointer;transition:all 0.2s ease;border-radius:var(--radius-xs);line-height:1.4}
+      .chip:hover{background:var(--bg-card-hover);border-color:rgba(255,255,255,0.12)}
+      .chip.active{background:rgba(255,87,34,0.12);border-color:var(--border-active);color:var(--fire-light);font-weight:600}
+      .btn-primary{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;letter-spacing:1.5px;text-transform:uppercase;background:var(--fire);color:#fff;border:none;padding:16px 36px;cursor:pointer;border-radius:var(--radius-xs);transition:all 0.25s ease;position:relative;overflow:hidden}
+      .btn-primary:hover{background:var(--fire-light);transform:translateY(-1px);box-shadow:0 8px 30px rgba(255,87,34,0.25)}
+      .btn-primary:disabled{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.15);cursor:not-allowed;transform:none;box-shadow:none}
+      .btn-secondary{font-family:'Syne',sans-serif;font-weight:600;font-size:13px;letter-spacing:1px;text-transform:uppercase;background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:13px 24px;cursor:pointer;border-radius:var(--radius-xs);transition:all 0.2s ease}
+      .btn-secondary:hover{border-color:rgba(255,255,255,0.2);color:var(--text-primary)}
+      .input-field{font-size:15px;width:100%;padding:14px 16px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-xs);color:var(--text-primary);outline:none;transition:border-color 0.2s}
+      .input-field:focus{border-color:var(--fire)}.input-field::placeholder{color:var(--text-muted)}
+      .exercise-grid{display:grid;grid-template-columns:2.2fr 0.6fr 0.8fr 0.6fr;gap:0}
+      @media(max-width:600px){.exercise-grid{grid-template-columns:1.8fr 0.5fr 0.7fr 0.5fr}.exercise-grid span{font-size:12px !important}}
+      .tab-btn{font-family:'Syne',sans-serif;font-weight:600;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;padding:12px 16px;background:transparent;border:none;cursor:pointer;transition:all 0.2s;white-space:nowrap;border-bottom:2px solid transparent}
+      @media(max-width:600px){.tab-btn{padding:10px 10px;font-size:10px;letter-spacing:1px}}
+      .chat-bubble{max-width:88%;padding:14px 18px;border-radius:18px;font-size:14px;line-height:1.7;word-wrap:break-word;white-space:pre-wrap}
+      .chat-bubble.user{background:rgba(255,87,34,0.12);border:1px solid rgba(255,87,34,0.15);align-self:flex-end;border-bottom-right-radius:4px}
+      .chat-bubble.fahd{background:var(--bg-card);border:1px solid var(--border);align-self:flex-start;border-bottom-left-radius:4px}
+      .stat-card{background:var(--bg-card);border:1px solid var(--border);padding:20px;text-align:center;border-radius:var(--radius-sm);transition:all 0.3s ease}
+      .stat-card:hover{border-color:var(--border-active);transform:translateY(-2px)}
+      .pricing-card{border:1px solid var(--border);padding:32px;background:var(--bg-card);border-radius:var(--radius);transition:all 0.3s ease}
+      .pricing-card.featured{border:2px solid var(--fire);background:rgba(255,87,34,0.04);position:relative}
+      .dots-loading span{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--fire-light);margin:0 3px}
+      .dots-loading span:nth-child(1){animation:dotPulse 1.2s infinite 0s}.dots-loading span:nth-child(2){animation:dotPulse 1.2s infinite 0.2s}.dots-loading span:nth-child(3){animation:dotPulse 1.2s infinite 0.4s}
+      .spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--fire);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto}
+    </style>
+  </head>
+  <body class="grain">
+    <div id="root"></div>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel">
+const{useState,useEffect,useRef}=React;
+const AL=["Sedentary (desk job)","Lightly active (1-2x/week)","Moderately active (3-4x/week)","Very active (5-6x/week)","Athlete (daily intense)"];
+const GL=["Fat Loss","Muscle Gain","Strength","Endurance","Flexibility","General Fitness","Rehab / Recovery"];
+const GA=["Full gym","Home gym (basic)","Bodyweight only","Resistance bands only","Mixed (gym + home)"];
+const DT=["No restrictions","Vegetarian","Vegan","Keto / Low-carb","Halal","Gluten-free","Dairy-free"];
+const SH=["< 5 hours","5-6 hours","6-7 hours","7-8 hours","8+ hours"];
+const SL=["Low","Moderate","High","Very High"];
+const WH=["< 6 hours","6-8 hours","8-10 hours","10-12 hours","12+ hours"];
+const INJ=["None","Lower back","Shoulder","Knee","Wrist/Elbow","Neck","Hip","Ankle","Pec/Chest","Other"];
+
+// Get admin key from URL param ?admin=yourkey
+function getAdminKey(){
+  try{const p=new URLSearchParams(window.location.search);return p.get('admin')||"";}catch(e){return"";}
+}
+
+async function callClaude(sys,usr,mt=4000,model="claude-sonnet-4-20250514"){
+  try{
+    const body={model:model,max_tokens:mt,system:sys,messages:[{role:"user",content:usr}]};
+    const ak=getAdminKey();if(ak)body.adminKey=ak;
+    const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const d=await r.json();if(d.error){console.error("API error:",d.error);return null;}return d.content?.map(i=>i.text||"").join("\n")||null;
+  }catch(e){console.error("API:",e);return null;}
+}
+
+async function callChat(sys,msgs,mt=1000){
+  try{
+    const am=msgs.map(m=>({role:m.sender==="user"?"user":"assistant",content:m.text}));
+    const body={model:"claude-haiku-4-5-20251001",max_tokens:mt,system:sys,messages:am};
+    const ak=getAdminKey();if(ak)body.adminKey=ak;
+    const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(r.status===429)return{limited:true,wait:d.wait||"a while",tier:d.tier||"unknown"};
+    if(d.error){console.error("Chat error:",d.error);return{limited:false,text:"Sorry, something went wrong. Try again."};}
+    return{limited:false,text:d.content?.map(i=>i.text||"").join("\n")||"Sorry, couldn't process that."};
+  }catch(e){return{limited:false,text:"Connection issue — please try again."};}
+}
+
+async function generateAIPlan(profile,assessment){
+  const{name,age,height,weight,gender}=profile;
+  const bmi=(weight/((height/100)**2)).toFixed(1);
+  const bmr=gender==="male"?Math.round(10*weight+6.25*height-5*age+5):Math.round(10*weight+6.25*height-5*age-161);
+
+  // Sanitize inputs — remove special chars that might break JSON
+  const goals=assessment.goals.map(g=>g.replace(/[\/]/g,'-')).join(", ");
+  const injuries=assessment.injuries.map(i=>i.replace(/[\/]/g,'-')).join(", ");
+  const diet=assessment.dietType.replace(/[\/]/g,'-');
+
+  const prompt=`Create a fitness plan as JSON for this person.
+
+USER: ${name}, ${age}yo ${gender}, ${height}cm, ${weight}kg, BMI ${bmi}, BMR ${bmr}
+Activity: ${assessment.activityLevel}
+Goals: ${goals}
+Gym: ${assessment.gymAccess}
+Diet: ${diet}
+Sleep: ${assessment.sleepHours}
+Stress: ${assessment.stressLevel}
+Work hours: ${assessment.workHours}
+Injuries: ${injuries}
+
+RULES:
+- Sleep under 6h: reduce volume, add recovery
+- High stress: include deload advice
+- Injuries: avoid loading injured areas
+- Work 10+h: sessions under 50min
+- Bodyweight only: only bodyweight exercises
+- Respect diet type strictly
+- Fat loss: caloric deficit. Muscle gain: surplus
+
+Return ONLY this JSON structure, nothing else:
+{"tdee":0,"calorieTarget":0,"protein":0,"carbs":0,"fats":0,"sleepRec":"","trainingDays":0,"split":"","restDays":"","planNotes":[""],"weeklyPlan":[{"day":"Monday","label":"","exercises":[{"name":"","sets":"","reps":"","rest":""}]},{"day":"Tuesday","label":"","exercises":[]},{"day":"Wednesday","label":"","exercises":[]},{"day":"Thursday","label":"","exercises":[]},{"day":"Friday","label":"","exercises":[]},{"day":"Saturday","label":"","exercises":[]},{"day":"Sunday","label":"","exercises":[]}],"meals":{"overview":"","proteinSources":"","carbSources":"","fatSources":"","schedule":[{"time":"","name":"","example":""}]},"recovery":[""],"timeAdvice":[""]}
+
+Fill all 7 days. 4-6 exercises on training days. Empty exercises array on rest days. 5-6 meals. 4-6 recovery tips. 4-6 time tips. Keep all string values short. No special characters in values. No markdown.`;
+
+  // Try up to 2 times
+  for(let attempt=0;attempt<2;attempt++){
+    const result=await callClaude("Output ONLY valid JSON. No markdown. No backticks. No explanation text before or after. Just the JSON object.",prompt,3500,"claude-haiku-4-5-20251001");
+    if(!result)continue;
+    try{
+      let cleaned=result;
+      // Extract JSON between first { and last }
+      const start=cleaned.indexOf('{');
+      const end=cleaned.lastIndexOf('}');
+      if(start!==-1&&end!==-1&&end>start){
+        cleaned=cleaned.substring(start,end+1);
+      }
+      // Fix common JSON issues
+      cleaned=cleaned.replace(/,\s*}/g,'}').replace(/,\s*]/g,']');
+      // Remove any control characters
+      cleaned=cleaned.replace(/[\x00-\x1F\x7F]/g,' ').replace(/\n/g,' ').replace(/\r/g,' ').replace(/\t/g,' ');
+      
+      const p=JSON.parse(cleaned);
+      
+      // Validate essential fields exist
+      if(!p.tdee||!p.weeklyPlan||!p.meals){
+        console.error("Missing fields in plan, retrying...");
+        continue;
+      }
+      
+      p.name=name;p.age=age;p.gender=gender;p.height=height;p.weight=weight;p.bmi=bmi;p.bmr=bmr;
+      p.hasInjury=assessment.injuries.length>0&&!assessment.injuries.includes("None");
+      p.injuries=assessment.injuries;
+      return p;
+    }catch(e){
+      console.error("Parse attempt "+(attempt+1)+":",e.message);
+      continue;
+    }
+  }
+  return null;
+}
+
+function buildChatSys(plan){
+  return `You are Ask Fahd — the AI fitness coach inside FARfit. Built by Fahd Rahman, natural athlete and entrepreneur in Dubai.
+
+Style: direct, no-fluff, practical. Talk like a knowledgeable coach not a textbook. Under 150 words unless detailed breakdown requested.
+
+Cover: training, nutrition, recovery, sleep, stress, injury prevention, mobility, running, functional fitness, time management.
+
+${plan?`USER'S PLAN DATA — personalise EVERY response to these:
+Name: ${plan.name}, Age: ${plan.age}, BMI: ${plan.bmi}
+TDEE: ${plan.tdee}, Target: ${plan.calorieTarget} kcal
+Macros: ${plan.protein}g P / ${plan.carbs}g C / ${plan.fats}g F
+Split: ${plan.split} (${plan.trainingDays}x/week)
+Sleep: ${plan.sleepRec}
+Injuries: ${plan.injuries?.join(', ')||'None'}
+
+Relate answers to THEIR numbers, THEIR split, THEIR injuries. Not generic.
+If they share new info (e.g. "slept 3 hours"), adjust advice for TODAY accordingly.`:'User has not done assessment. Answer general questions but suggest the free assessment.'}
+
+Rules: No medical diagnoses — recommend doctor/physio. Be honest about scope limits. Never mention sources/citations/references unless asked.`;
+}
+
+function genPlanText(p){
+  let t=`FARfit — PLAN FOR ${p.name.toUpperCase()}\n${"═".repeat(50)}\n\n`;
+  t+=`Age: ${p.age} | ${p.height}cm | ${p.weight}kg | BMI: ${p.bmi}\n`;
+  t+=`BMR: ${p.bmr} | TDEE: ${p.tdee} | Target: ${p.calorieTarget} kcal\n`;
+  t+=`P: ${p.protein}g | C: ${p.carbs}g | F: ${p.fats}g\n`;
+  t+=`Split: ${p.split} (${p.trainingDays}x/wk) | Rest: ${p.restDays}\nSleep: ${p.sleepRec}\n\n`;
+  if(p.planNotes?.length){p.planNotes.forEach(n=>{t+=`• ${n}\n`;});t+="\n";}
+  t+=`WORKOUT\n${"─".repeat(40)}\n`;
+  (p.weeklyPlan||[]).forEach(d=>{t+=`\n${d.day} — ${d.label}\n`;if(!d.exercises?.length)t+="  Rest / active recovery\n";else d.exercises.forEach(e=>{t+=`  ${e.name.padEnd(32)} ${String(e.sets).padEnd(7)} ${String(e.reps).padEnd(10)} ${e.rest}\n`;});});
+  t+=`\n\nNUTRITION\n${"─".repeat(40)}\n${p.meals?.overview}\n\n`;
+  (p.meals?.schedule||[]).forEach(m=>{t+=`${m.time}  ${m.name}: ${m.example}\n`;});
+  t+=`\nProtein: ${p.meals?.proteinSources}\nCarbs: ${p.meals?.carbSources}\nFats: ${p.meals?.fatSources}`;
+  t+=`\n\nRECOVERY\n${"─".repeat(40)}\n`;(p.recovery||[]).forEach((r,i)=>{t+=`${i+1}. ${r}\n`;});
+  t+=`\nSCHEDULE\n${"─".repeat(40)}\n`;(p.timeAdvice||[]).forEach(a=>{t+=`→ ${a}\n`;});
+  t+=`\n\n${"═".repeat(50)}\nFARfit — askfahd.netlify.app\nBuilt by Fahd Rahman\n`;
+  return t;
+}
+
+function dlPlan(p){const b=new Blob([genPlanText(p)],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=`FARfit_${p.name.replace(/\s+/g,'_')}.txt`;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u);}
+
+// ── Components ──
+function Shell({children}){return(<div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",background:`radial-gradient(ellipse 80% 60% at 50% -10%,rgba(255,87,34,0.06) 0%,transparent 60%),radial-gradient(ellipse 60% 50% at 80% 100%,rgba(255,145,0,0.03) 0%,transparent 50%),var(--bg-deep)`,padding:"32px 20px 60px"}}><div style={{width:"100%",maxWidth:"700px",animation:"fadeUp 0.6s ease both"}}>{children}</div></div>);}
+function Logo({onClick}){return(<div onClick={onClick} style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"24px",letterSpacing:"3px",color:"var(--fire)",cursor:onClick?"pointer":"default",marginBottom:"48px",userSelect:"none"}}>FARfit</div>);}
+function STitle({t,s}){return(<div style={{marginBottom:"36px"}}><h2 style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"clamp(26px,5vw,40px)",lineHeight:1.1,marginBottom:"8px"}}>{t}</h2>{s&&<p style={{fontSize:"14px",color:"var(--text-muted)",fontWeight:400}}>{s}</p>}</div>);}
+function PBar({p}){return(<div style={{width:"100%",height:"3px",background:"var(--border)",marginBottom:"36px",borderRadius:"3px",overflow:"hidden"}}><div style={{width:`${p*100}%`,height:"100%",background:"var(--fire)",transition:"width 0.4s",borderRadius:"3px"}}/></div>);}
+function Chips({opts,sel,onT,multi}){return(<div style={{display:"flex",flexWrap:"wrap",gap:"8px"}}>{opts.map(o=>{const a=multi?sel.includes(o):sel===o;return(<button key={o} className={`chip ${a?'active':''}`} onClick={()=>onT(o)}>{o}</button>);})}</div>);}
+function FF({l,children}){return(<div style={{marginBottom:"24px"}}><label style={{fontFamily:"'Syne',sans-serif",fontSize:"11px",fontWeight:700,letterSpacing:"2px",textTransform:"uppercase",color:"var(--text-muted)",display:"block",marginBottom:"10px"}}>{l}</label>{children}</div>);}
+
+// ── Landing ──
+function Landing({onStart,onAbout,onChat}){
+  const[v,setV]=useState(false);useEffect(()=>{setTimeout(()=>setV(true),80);},[]);
+  return(<div style={{minHeight:"100vh",display:"flex",flexDirection:"column",background:`radial-gradient(ellipse 70% 50% at 60% -5%,rgba(255,87,34,0.10) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 10% 90%,rgba(255,145,0,0.04) 0%,transparent 50%),var(--bg-deep)`,color:"#fff",overflow:"hidden"}}>
+    <nav style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"24px 28px",zIndex:2}}>
+      <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"24px",letterSpacing:"3px",color:"var(--fire)"}}>FARfit</div>
+      <div style={{display:"flex",gap:"24px",fontSize:"13px",fontWeight:500}}>
+        <span style={{color:"var(--text-secondary)",cursor:"pointer"}} onClick={onAbout}>About</span>
+        <span style={{color:"var(--text-secondary)",cursor:"pointer"}} onClick={onChat}>Ask Fahd</span>
+        <span style={{color:"var(--fire)",cursor:"pointer",fontWeight:600}} onClick={onStart}>Start Free</span>
+      </div>
+    </nav>
+    <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center",textAlign:"center",padding:"20px 24px 40px",opacity:v?1:0,transform:v?"none":"translateY(24px)",transition:"all 0.7s cubic-bezier(0.16,1,0.3,1)",zIndex:2}}>
+      <div style={{fontSize:"11px",fontWeight:700,letterSpacing:"4px",textTransform:"uppercase",color:"var(--fire)",marginBottom:"28px",opacity:0.85}}>AI-POWERED PERSONAL COACHING</div>
+      <h1 style={{fontFamily:"'Syne',sans-serif",fontWeight:900,fontSize:"clamp(40px,9vw,84px)",lineHeight:0.95,letterSpacing:"-1px",margin:"0 0 28px",maxWidth:"750px"}}>YOUR BODY.<br/><span style={{color:"var(--fire)"}}>YOUR RULES.</span><br/>YOUR COACH.</h1>
+      <p style={{fontSize:"17px",lineHeight:1.75,maxWidth:"520px",color:"var(--text-secondary)",marginBottom:"36px",fontWeight:300}}>A 5-minute assessment that builds your personalised training program, nutrition plan, recovery protocol, and daily schedule — powered by AI, designed for professionals who don't have time to waste.</p>
+      <button className="btn-primary" onClick={onStart} style={{fontSize:"16px",padding:"20px 48px"}}>START YOUR FREE ASSESSMENT →</button>
+      <p style={{fontSize:"12px",color:"var(--text-muted)",marginTop:"14px"}}>No signup required · Results in under 5 minutes</p>
+    </div>
+    <div style={{display:"flex",justifyContent:"center",gap:"40px",padding:"36px 24px",borderTop:"1px solid var(--border)",flexWrap:"wrap"}}>
+      {[["📊","Smart Assessment","Habits, energy, sleep & stress"],["🏋️","AI Training Plans","Personalised sets, reps & rest"],["🥗","Nutrition Plan","Macro-optimised for your goals"],["⏰","Time Management","Built for 10+ hour work days"]].map(([ic,ti,su],i)=>(<div key={i} style={{textAlign:"center",maxWidth:"160px"}}><div style={{fontSize:"24px",marginBottom:"8px"}}>{ic}</div><div style={{fontFamily:"'Syne',sans-serif",fontSize:"13px",fontWeight:700,letterSpacing:"1px",marginBottom:"4px"}}>{ti}</div><div style={{fontSize:"11px",color:"var(--text-muted)",lineHeight:1.5}}>{su}</div></div>))}
+    </div>
+  </div>);
+}
+
+// ── About ──
+function About({onBack,onStart,onChat}){
+  return(<Shell><Logo onClick={onBack}/><STitle t="ABOUT FAHD" s="The person behind FARfit"/>
+    <div style={{fontSize:"15px",lineHeight:1.85,color:"var(--text-secondary)",marginBottom:"32px"}}>
+      <p style={{marginBottom:"16px"}}>I'm Fahd Rahman — a natural athlete, entrepreneur, and operational CEO based in Dubai. I grew up running businesses alongside my father in Kerala, from juice shops and café chains to construction and advertising. That grind taught me what discipline actually looks like before I ever touched a barbell.</p>
+      <p style={{marginBottom:"16px"}}>After completing my Master's in the UK (where I worked my way up to supervisor in hospitality), I moved to Dubai to lead Aurion — a startup investment company with stakes across photo studios, cafés, gyms, a kindergarten, and food production.</p>
+      <p style={{marginBottom:"16px"}}>I built FARfit because I was tired of seeing busy professionals — people like me — waste time on generic programs that don't account for real life: 12-hour work days, injuries, stress, bad sleep, dietary restrictions. The fitness industry sells perfection. I coach reality.</p>
+      <p style={{marginBottom:"16px"}}>My approach is functional — kettlebells, carries, bodyweight mastery, running, mobility — blended with smart nutrition and recovery. Currently training through an injury myself, so I understand rehab programming from the inside.</p>
+      <p>FARfit is free. My philosophy: give people the tools first. If you want deeper coaching, we can talk.</p>
+    </div>
+    <div style={{display:"flex",gap:"10px",flexWrap:"wrap"}}>
+      <button className="btn-primary" onClick={onStart}>START ASSESSMENT</button>
+      <button className="btn-secondary" onClick={onChat}>CHAT WITH FAHD</button>
+      <button className="btn-secondary" onClick={onBack}>← BACK</button>
+    </div>
+  </Shell>);
+}
+
+// ── Chat ──
+function Chat({plan}){
+  const[msgs,setMsgs]=useState([{sender:"fahd",text:"I'm Ask Fahd — your AI fitness coach. Ask me anything about training, nutrition, recovery, sleep, stress, injuries, or time management.\n\nI'll personalise every answer based on what I know about you. If you haven't done the assessment yet, I'd recommend it — but I can still help either way."}]);
+  const[inp,setInp]=useState("");const[loading,setLoading]=useState(false);
+  const[limitInfo,setLimitInfo]=useState(null);
+  const ref=useRef(null);
+  useEffect(()=>{if(ref.current)ref.current.scrollTop=ref.current.scrollHeight;},[msgs,loading]);
+
+  const send=async()=>{
+    const q=inp.trim();if(!q||loading||limitInfo)return;
+    const um={sender:"user",text:q};const up=[...msgs,um];
+    setMsgs(up);setInp("");setLoading(true);
+    const reply=await callChat(buildChatSys(plan),up);
+    if(reply.limited){
+      setLimitInfo({wait:reply.wait,tier:reply.tier});
+      setMsgs(p=>[...p,{sender:"fahd",text:`You've reached your free message limit. Next batch available in ${reply.wait}. Or upgrade for more.`}]);
+    }else{
+      setMsgs(p=>[...p,{sender:"fahd",text:reply.text}]);
+    }
+    setLoading(false);
+  };
+
+  const tierLabels={
+    "tier2_cooldown":"You've used your first 5 free messages.",
+    "tier3_cooldown":"You've used your bonus messages too.",
+    "tier4_cooldown":"You've reached the daily free limit.",
+  };
+
+  return(<div>
+    <div ref={ref} style={{minHeight:"300px",maxHeight:"460px",overflowY:"auto",padding:"20px",borderRadius:"var(--radius)",background:"var(--bg-card)",border:"1px solid var(--border)",marginBottom:"16px",display:"flex",flexDirection:"column",gap:"14px"}}>
+      {msgs.map((m,i)=>(<div key={i} className={`chat-bubble ${m.sender==='user'?'user':'fahd'}`} style={{animation:`slideIn 0.3s ease ${Math.min(i*0.05,0.3)}s both`}}>{m.text}</div>))}
+      {loading&&(<div className="chat-bubble fahd dots-loading" style={{padding:"16px 22px"}}><span></span><span></span><span></span></div>)}
+    </div>
+    {limitInfo?(<div style={{padding:"28px",background:"rgba(255,87,34,0.06)",border:"1px solid rgba(255,87,34,0.2)",borderRadius:"var(--radius)",textAlign:"center"}}>
+      <div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:"16px",marginBottom:"8px"}}>FREE LIMIT REACHED</div>
+      <p style={{fontSize:"13px",color:"var(--text-secondary)",lineHeight:1.6,marginBottom:"6px"}}>{tierLabels[limitInfo.tier]||"You've used your free messages."}</p>
+      <p style={{fontSize:"13px",color:"var(--text-muted)",marginBottom:"20px"}}>Next free messages available in <strong style={{color:"var(--fire)"}}>{limitInfo.wait}</strong></p>
+
+      <div style={{display:"flex",gap:"10px",justifyContent:"center",flexWrap:"wrap",marginBottom:"20px"}}>
+        <div style={{flex:"1",minWidth:"200px",maxWidth:"260px",padding:"20px",background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-sm)",textAlign:"center"}}>
+          <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"11px",letterSpacing:"2px",color:"var(--fire)",marginBottom:"4px"}}>PRO</div>
+          <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"24px",marginBottom:"8px"}}>$9.99<span style={{fontSize:"12px",color:"var(--text-muted)"}}>/mo</span></div>
+          <div style={{fontSize:"12px",color:"var(--text-secondary)",lineHeight:1.6,marginBottom:"14px"}}>50 messages/day<br/>Weekly plan updates<br/>Progress tracking</div>
+          <button className="btn-primary" style={{width:"100%",fontSize:"11px",padding:"12px"}}>UPGRADE TO PRO</button>
+        </div>
+        <div style={{flex:"1",minWidth:"200px",maxWidth:"260px",padding:"20px",background:"rgba(255,87,34,0.04)",border:"2px solid var(--fire)",borderRadius:"var(--radius-sm)",textAlign:"center",position:"relative"}}>
+          <div style={{position:"absolute",top:"-1px",right:"14px",background:"var(--fire)",padding:"2px 8px",borderRadius:"0 0 6px 6px",fontSize:"9px",fontWeight:700,letterSpacing:"1px"}}>BEST VALUE</div>
+          <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"11px",letterSpacing:"2px",color:"var(--fire)",marginBottom:"4px"}}>MAX</div>
+          <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"24px",marginBottom:"8px"}}>$29.99<span style={{fontSize:"12px",color:"var(--text-muted)"}}>/mo</span></div>
+          <div style={{fontSize:"12px",color:"var(--text-secondary)",lineHeight:1.6,marginBottom:"14px"}}>Unlimited messages<br/>1-on-1 coaching<br/>WhatsApp access</div>
+          <button className="btn-primary" style={{width:"100%",fontSize:"11px",padding:"12px"}}>GO UNLIMITED</button>
+        </div>
+      </div>
+
+      <button className="btn-secondary" style={{fontSize:"11px",padding:"10px 20px"}} onClick={()=>setLimitInfo(null)}>WAIT & TRY LATER</button>
+    </div>):(<div style={{display:"flex",gap:"10px"}}>
+      <textarea value={inp} onChange={e=>setInp(e.target.value)} onKeyDown={e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send();}}} placeholder="Ask about training, nutrition, recovery..." style={{flex:1,minHeight:"52px",maxHeight:"120px",padding:"14px 16px",borderRadius:"var(--radius-sm)",border:"1px solid var(--border)",background:"var(--bg-card)",color:"var(--text-primary)",fontSize:"14px",resize:"none",outline:"none",transition:"border-color 0.2s"}} onFocus={e=>e.target.style.borderColor="var(--fire)"} onBlur={e=>e.target.style.borderColor="var(--border)"}/>
+      <button className="btn-primary" onClick={send} disabled={loading||!inp.trim()} style={{padding:"14px 24px",fontSize:"13px",alignSelf:"flex-end"}}>{loading?"...":"SEND"}</button>
+    </div>)}
+  </div>);
+}
+
+function ChatPage({onBack,plan}){return(<Shell><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"48px"}}><Logo onClick={onBack}/><button className="btn-secondary" onClick={onBack} style={{padding:"10px 20px",fontSize:"12px"}}>← BACK</button></div><STitle t="ASK FAHD" s="AI-powered fitness coaching — ask anything"/><Chat plan={plan}/></Shell>);}
+
+// ── Onboarding ──
+function Onboard({onDone,onBack}){
+  const[n,sN]=useState("");const[a,sA]=useState("");const[g,sG]=useState("");const[h,sH]=useState("");const[w,sW]=useState("");
+  const ok=n&&a&&g&&h&&w;
+  return(<Shell><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"48px"}}><Logo onClick={onBack}/><button className="btn-secondary" onClick={onBack} style={{padding:"10px 20px",fontSize:"12px"}}>← BACK</button></div><STitle t="LET'S GET TO KNOW YOU" s="Basic details to calibrate your program"/>
+    <FF l="Your Name"><input className="input-field" value={n} onChange={e=>sN(e.target.value)} placeholder="e.g. Alex"/></FF>
+    <FF l="Age"><input className="input-field" type="number" value={a} onChange={e=>sA(e.target.value)} placeholder="e.g. 28"/></FF>
+    <FF l="Gender"><Chips opts={["Male","Female"]} sel={g} onT={v=>sG(v)}/></FF>
+    <div style={{display:"flex",gap:"14px"}}><div style={{flex:1}}><FF l="Height (cm)"><input className="input-field" type="number" value={h} onChange={e=>sH(e.target.value)} placeholder="178"/></FF></div><div style={{flex:1}}><FF l="Weight (kg)"><input className="input-field" type="number" value={w} onChange={e=>sW(e.target.value)} placeholder="82"/></FF></div></div>
+    <button className="btn-primary" disabled={!ok} style={{width:"100%"}} onClick={()=>onDone({name:n,age:parseInt(a),gender:g.toLowerCase(),height:parseInt(h),weight:parseInt(w)})}>CONTINUE →</button>
+  </Shell>);
+}
+
+// ── Assessment ──
+function Assess({onDone,onBack}){
+  const[step,setStep]=useState(0);
+  const[d,setD]=useState({activityLevel:"",goals:[],gymAccess:"",dietType:"",sleepHours:"",stressLevel:"",workHours:"",injuries:[]});
+  const steps=[{l:"Activity Level",k:"activityLevel",o:AL},{l:"Your Goals (select all)",k:"goals",o:GL,m:true},{l:"Gym Access",k:"gymAccess",o:GA},{l:"Dietary Preference",k:"dietType",o:DT},{l:"Average Sleep",k:"sleepHours",o:SH},{l:"Stress Level",k:"stressLevel",o:SL},{l:"Daily Work Hours",k:"workHours",o:WH},{l:"Any Injuries? (select all)",k:"injuries",o:INJ,m:true}];
+  const c=steps[step];const last=step===steps.length-1;
+  const ok=c.m?d[c.k].length>0:d[c.k]!=="";
+
+  const toggle=(val)=>{
+    if(c.m){setD(prev=>{const arr=prev[c.k];if(val==="None")return{...prev,[c.k]:["None"]};const f=arr.filter(v=>v!=="None");return{...prev,[c.k]:f.includes(val)?f.filter(v=>v!==val):[...f,val]};});}
+    else{setD(prev=>({...prev,[c.k]:val}));}
+  };
+
+  return(<Shell><Logo/><PBar p={(step+1)/steps.length}/><STitle t="DAILY ASSESSMENT" s={`Question ${step+1} of ${steps.length}`}/>
+    <div key={step} style={{animation:"fadeUp 0.35s ease both"}}><FF l={c.l}><Chips opts={c.o} sel={d[c.k]} onT={toggle} multi={c.m}/></FF></div>
+    <div style={{display:"flex",gap:"10px"}}>
+      {step>0?<button className="btn-secondary" onClick={()=>setStep(s=>s-1)}>← BACK</button>:<button className="btn-secondary" onClick={onBack}>← HOME</button>}
+      <button className="btn-primary" disabled={!ok} style={{flex:1}} onClick={()=>last?onDone(d):setStep(s=>s+1)}>{last?"GENERATE MY PLAN →":"NEXT →"}</button>
+    </div>
+  </Shell>);
+}
+
+// ── Generating ──
+function Generating(){
+  const[mi,setMi]=useState(0);
+  const ms=["Analysing your profile...","Building your training split...","Calculating macros for your goals...","Designing recovery protocol...","Optimising for your schedule...","Finalising your plan..."];
+  useEffect(()=>{const iv=setInterval(()=>setMi(i=>(i+1)%ms.length),2800);return()=>clearInterval(iv);},[]);
+  return(<Shell><Logo/><div style={{textAlign:"center",paddingTop:"80px"}}><div className="spinner" style={{marginBottom:"32px"}}></div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:"20px",marginBottom:"12px"}}>GENERATING YOUR PLAN</div><div style={{fontSize:"14px",color:"var(--fire-light)",animation:"fadeIn 0.4s ease both"}} key={mi}>{ms[mi]}</div><p style={{fontSize:"12px",color:"var(--text-muted)",marginTop:"24px"}}>This takes 15-30 seconds — AI is building everything from scratch for you.</p></div></Shell>);
+}
+
+// ── Email Gate ──
+function EmailGate({plan,onUnlock,onBack}){
+  const[email,setEmail]=useState("");const[sub,setSub]=useState(false);
+  const ok=email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
+  const go=()=>{if(!ok)return;console.log("Email:",email);setSub(true);setTimeout(()=>onUnlock(email),600);};
+
+  return(<Shell><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"48px"}}><Logo onClick={onBack}/><button className="btn-secondary" onClick={onBack} style={{padding:"10px 20px",fontSize:"12px"}}>← BACK</button></div><STitle t={`${plan.name.toUpperCase()}, YOUR PLAN IS READY`} s="One more step to unlock your full personalised program"/>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:"10px",marginBottom:"32px"}}>
+      {[["BMI",plan.bmi],["BMR",plan.bmr],["TDEE",plan.tdee],["TARGET",plan.calorieTarget]].map(([l,v],i)=>(<div key={i} className="stat-card" style={{animation:`fadeUp 0.5s ease ${i*0.08}s both`}}><div style={{fontSize:"10px",letterSpacing:"2px",color:"var(--text-muted)",marginBottom:"6px",fontWeight:600}}>{l}</div><div style={{fontFamily:"'Syne',sans-serif",fontSize:"28px",fontWeight:800,color:"var(--fire)"}}>{v}</div>{l!=="BMI"&&<div style={{fontSize:"11px",color:"var(--text-muted)"}}>kcal/day</div>}</div>))}
+    </div>
+    <div style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius)",padding:"24px",marginBottom:"24px"}}>
+      <div style={{fontSize:"14px",lineHeight:1.7,color:"var(--text-secondary)"}}>
+        <span style={{color:"var(--fire)",fontWeight:600}}>Split:</span> {plan.split} ({plan.trainingDays}x/week) · <span style={{color:"var(--fire)",fontWeight:600}}>Rest:</span> {plan.restDays}<br/>
+        <span style={{color:"var(--fire)",fontWeight:600}}>Macros:</span> {plan.protein}g protein · {plan.carbs}g carbs · {plan.fats}g fats
+      </div>
+      {plan.planNotes?.length>0&&(<div style={{marginTop:"14px",padding:"12px 14px",background:"rgba(255,255,255,0.02)",borderRadius:"var(--radius-xs)",border:"1px solid var(--border)"}}>{plan.planNotes.map((n,i)=>(<div key={i} style={{fontSize:"13px",color:"var(--text-muted)",lineHeight:1.6,marginBottom:i<plan.planNotes.length-1?"6px":0}}>• {n}</div>))}</div>)}
+    </div>
+    <div style={{background:"rgba(255,87,34,0.04)",border:"1px solid rgba(255,87,34,0.15)",borderRadius:"var(--radius)",padding:"28px",textAlign:"center"}}>
+      <div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:"18px",marginBottom:"8px"}}>Unlock Your Full Plan</div>
+      <p style={{fontSize:"13px",color:"var(--text-secondary)",marginBottom:"20px",lineHeight:1.6}}>Enter your email to access your complete workout chart, meal plan, recovery protocol, and schedule. No spam — just your plan.</p>
+      <div style={{display:"flex",gap:"10px",maxWidth:"420px",margin:"0 auto"}}>
+        <input className="input-field" type="email" value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")go();}} placeholder="your@email.com" style={{flex:1}}/>
+        <button className="btn-primary" disabled={!ok||sub} onClick={go} style={{padding:"14px 24px",whiteSpace:"nowrap"}}>{sub?"✓":"UNLOCK"}</button>
+      </div>
+      <p style={{fontSize:"11px",color:"var(--text-muted)",marginTop:"12px"}}>We respect your privacy. Unsubscribe anytime.</p>
+    </div>
+  </Shell>);
+}
+
+// ── Plan View ──
+function Plan({plan,onBack}){
+  const[tab,setTab]=useState("workout");
+  const tabs=[{id:"workout",l:"WORKOUT"},{id:"nutrition",l:"NUTRITION"},{id:"recovery",l:"RECOVERY"},{id:"schedule",l:"SCHEDULE"},{id:"chat",l:"ASK FAHD"}];
+  const ms=plan.meals?.schedule||plan.meals?.meals||[];
+
+  return(<Shell>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"48px"}}><Logo onClick={onBack}/><div style={{display:"flex",gap:"8px"}}><button className="btn-secondary" onClick={onBack} style={{padding:"10px 18px",fontSize:"11px"}}>← HOME</button><button className="btn-secondary" onClick={()=>dlPlan(plan)} style={{padding:"10px 18px",fontSize:"11px"}}>↓ DOWNLOAD</button></div></div>
+    <STitle t="YOUR PERSONALISED PLAN" s={`${plan.split} · ${plan.trainingDays}x/week · ${plan.calorieTarget} kcal`}/>
+
+    <div style={{display:"flex",gap:"0",marginBottom:"32px",borderBottom:"1px solid var(--border)",overflowX:"auto"}}>
+      {tabs.map(t=>(<button key={t.id} className="tab-btn" onClick={()=>setTab(t.id)} style={{color:tab===t.id?"var(--fire)":"var(--text-muted)",borderBottomColor:tab===t.id?"var(--fire)":"transparent"}}>{t.l}</button>))}
+    </div>
+
+    {tab==="workout"&&(<div>{(plan.weeklyPlan||[]).map((day,i)=>(<div key={i} style={{marginBottom:"20px",animation:`fadeUp 0.3s ease ${i*0.04}s both`}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"10px"}}>
+        <span style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:"15px",letterSpacing:"1px"}}>{day.day}</span>
+        <span style={{fontSize:"12px",fontWeight:600,color:day.exercises?.length>0?"var(--fire)":"var(--text-muted)",letterSpacing:"0.5px"}}>{day.label}</span>
+      </div>
+      {day.exercises?.length>0?(<div style={{background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-sm)",overflow:"hidden"}}>
+        <div className="exercise-grid" style={{padding:"10px 14px",borderBottom:"1px solid var(--border)"}}>{["EXERCISE","SETS","REPS","REST"].map(h=>(<span key={h} style={{fontSize:"10px",letterSpacing:"1.5px",color:"var(--text-muted)",fontWeight:700}}>{h}</span>))}</div>
+        {day.exercises.map((ex,j)=>(<div key={j} className="exercise-grid" style={{padding:"11px 14px",borderBottom:j<day.exercises.length-1?"1px solid rgba(255,255,255,0.03)":"none"}}>
+          <span style={{fontSize:"13.5px",fontWeight:500,color:"var(--text-primary)"}}>{ex.name}</span>
+          <span style={{fontSize:"13px",color:"var(--text-secondary)"}}>{ex.sets}</span>
+          <span style={{fontSize:"13px",color:"var(--text-secondary)"}}>{ex.reps}</span>
+          <span style={{fontSize:"13px",color:"var(--text-muted)"}}>{ex.rest}</span>
+        </div>))}
+      </div>):(<div style={{padding:"14px 16px",background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-sm)",fontSize:"13px",color:"var(--text-muted)",fontStyle:"italic"}}>Active recovery — light walking, stretching, mobility work</div>)}
+    </div>))}</div>)}
+
+    {tab==="nutrition"&&(<div style={{animation:"fadeUp 0.35s ease both"}}>
+      <div style={{background:"rgba(255,87,34,0.06)",border:"1px solid rgba(255,87,34,0.15)",borderRadius:"var(--radius-sm)",padding:"18px",marginBottom:"24px",fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:"17px",color:"var(--fire)",letterSpacing:"0.5px"}}>{plan.meals?.overview}</div>
+      {[["PROTEIN SOURCES",plan.meals?.proteinSources],["CARB SOURCES",plan.meals?.carbSources],["FAT SOURCES",plan.meals?.fatSources]].map(([l,v])=>v?(<div key={l} style={{marginBottom:"18px"}}><div style={{fontSize:"10px",letterSpacing:"2px",color:"var(--text-muted)",fontWeight:700,marginBottom:"6px"}}>{l}</div><div style={{fontSize:"14px",color:"var(--text-secondary)",lineHeight:1.6}}>{v}</div></div>):null)}
+      {ms.length>0&&(<div><div style={{fontFamily:"'Syne',sans-serif",fontSize:"13px",fontWeight:700,letterSpacing:"1.5px",color:"var(--text-muted)",marginTop:"28px",marginBottom:"14px"}}>SAMPLE MEAL SCHEDULE</div>
+        {ms.map((m,i)=>(<div key={i} style={{display:"flex",gap:"14px",padding:"12px 0",borderBottom:"1px solid rgba(255,255,255,0.03)"}}><span style={{fontSize:"12px",color:"var(--fire)",fontWeight:700,minWidth:"65px"}}>{m.time}</span><div><div style={{fontSize:"14px",fontWeight:600,color:"var(--text-primary)",marginBottom:"2px"}}>{m.name}</div><div style={{fontSize:"12.5px",color:"var(--text-muted)"}}>{m.example}</div></div></div>))}
+      </div>)}
+    </div>)}
+
+    {tab==="recovery"&&(<div style={{animation:"fadeUp 0.35s ease both"}}>
+      {(plan.recovery||[]).map((tip,i)=>(<div key={i} style={{display:"flex",gap:"12px",padding:"13px 16px",marginBottom:"6px",background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-xs)",fontSize:"14px",color:"var(--text-secondary)",lineHeight:1.6}}><span style={{color:"var(--fire)",fontWeight:700,flexShrink:0}}>{String(i+1).padStart(2,"0")}</span>{tip}</div>))}
+      <div style={{marginTop:"20px",padding:"18px",borderRadius:"var(--radius-sm)",background:"rgba(0,180,230,0.04)",border:"1px solid rgba(0,180,230,0.12)",fontSize:"14px",color:"var(--text-secondary)",lineHeight:1.7}}><strong style={{color:"#4FC3F7"}}>💤 Sleep Target:</strong> {plan.sleepRec}</div>
+    </div>)}
+
+    {tab==="schedule"&&(<div style={{animation:"fadeUp 0.35s ease both"}}>
+      {(plan.timeAdvice||[]).map((tip,i)=>(<div key={i} style={{display:"flex",gap:"12px",padding:"13px 16px",marginBottom:"6px",background:"var(--bg-card)",border:"1px solid var(--border)",borderRadius:"var(--radius-xs)",fontSize:"14px",color:"var(--text-secondary)",lineHeight:1.6}}><span style={{color:"var(--fire)",fontWeight:700,flexShrink:0}}>→</span>{tip}</div>))}
+    </div>)}
+
+    {tab==="chat"&&<Chat plan={plan}/>}
+
+    <div style={{marginTop:"40px",padding:"32px",borderRadius:"var(--radius)",background:"rgba(255,87,34,0.04)",border:"1px solid rgba(255,87,34,0.12)",textAlign:"center"}}>
+      <div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"22px",marginBottom:"10px"}}>WANT DEEPER COACHING?</div>
+      <p style={{fontSize:"14px",color:"var(--text-secondary)",lineHeight:1.7,marginBottom:"20px",maxWidth:"420px",margin:"0 auto 20px"}}>Weekly plan updates, direct WhatsApp access to Fahd, progress reviews, and accountability check-ins.</p>
+      <div style={{display:"flex",gap:"12px",justifyContent:"center",flexWrap:"wrap"}}>
+        <div className="pricing-card" style={{maxWidth:"220px",padding:"24px"}}><div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"11px",letterSpacing:"2px",color:"var(--text-muted)",marginBottom:"6px"}}>PRO</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"32px",marginBottom:"12px"}}>$9.99<span style={{fontSize:"14px",color:"var(--text-muted)"}}>/mo</span></div><div style={{fontSize:"12px",color:"var(--text-secondary)",lineHeight:1.7,marginBottom:"16px"}}>Weekly plan updates<br/>AI coaching chat<br/>Progress tracking</div><button className="btn-secondary" style={{width:"100%",fontSize:"11px"}}>COMING SOON</button></div>
+        <div className="pricing-card featured" style={{maxWidth:"220px",padding:"24px"}}><div style={{position:"absolute",top:"-1px",right:"16px",background:"var(--fire)",padding:"3px 10px",borderRadius:"0 0 6px 6px",fontSize:"9px",fontWeight:700,letterSpacing:"1px"}}>POPULAR</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"11px",letterSpacing:"2px",color:"var(--fire)",marginBottom:"6px"}}>ELITE</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:800,fontSize:"32px",marginBottom:"12px"}}>$29.99<span style={{fontSize:"14px",color:"var(--text-muted)"}}>/mo</span></div><div style={{fontSize:"12px",color:"var(--text-secondary)",lineHeight:1.7,marginBottom:"16px"}}>1-on-1 coaching (2x/mo)<br/>WhatsApp access<br/>Custom supplements</div><button className="btn-primary" style={{width:"100%",fontSize:"11px",padding:"12px"}}>COMING SOON</button></div>
+      </div>
+    </div>
+  </Shell>);
+}
+
+// ── Error ──
+function Err({onRetry}){return(<Shell><Logo/><div style={{textAlign:"center",paddingTop:"60px"}}><div style={{fontSize:"48px",marginBottom:"20px"}}>⚠️</div><div style={{fontFamily:"'Syne',sans-serif",fontWeight:700,fontSize:"22px",marginBottom:"12px"}}>PLAN GENERATION FAILED</div><p style={{fontSize:"14px",color:"var(--text-secondary)",marginBottom:"28px",lineHeight:1.7}}>The AI couldn't generate your plan this time. This can happen due to high demand. Your data is saved — just hit retry.</p><button className="btn-primary" onClick={onRetry}>RETRY →</button></div></Shell>);}
+
+// ── App ──
+function App(){
+  const[phase,setPhase]=useState("landing");
+  const[profile,setProfile]=useState(null);
+  const[assessment,setAssessment]=useState(null);
+  const[plan,setPlan]=useState(null);
+
+  const onOnboard=(d)=>{setProfile(d);setPhase("assessment");};
+  const onAssess=async(d)=>{
+    setAssessment(d);setPhase("generating");
+    const p=await generateAIPlan(profile,d);
+    if(p){setPlan(p);setPhase("email-gate");}else{setPhase("error");}
+  };
+  const onRetry=async()=>{
+    if(!profile||!assessment){setPhase("onboarding");return;}
+    setPhase("generating");
+    const p=await generateAIPlan(profile,assessment);
+    if(p){setPlan(p);setPhase("email-gate");}else{setPhase("error");}
+  };
+  const onEmail=(e)=>{setPhase("plan");};
+  const goHome=()=>setPhase("landing");
+
+  return(<div>
+    {phase==="landing"&&<Landing onStart={()=>setPhase("onboarding")} onAbout={()=>setPhase("about")} onChat={()=>setPhase("chat")}/>}
+    {phase==="about"&&<About onBack={goHome} onStart={()=>setPhase("onboarding")} onChat={()=>setPhase("chat")}/>}
+    {phase==="chat"&&<ChatPage onBack={goHome} plan={plan}/>}
+    {phase==="onboarding"&&<Onboard onDone={onOnboard} onBack={goHome}/>}
+    {phase==="assessment"&&<Assess onDone={onAssess} onBack={()=>setPhase("onboarding")}/>}
+    {phase==="generating"&&<Generating/>}
+    {phase==="error"&&<Err onRetry={onRetry}/>}
+    {phase==="email-gate"&&plan&&<EmailGate plan={plan} onUnlock={onEmail} onBack={goHome}/>}
+    {phase==="plan"&&plan&&<Plan plan={plan} onBack={goHome}/>}
+  </div>);
+}
+
+const root=ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App/>);
+    </script>
+  </body>
+</html>
