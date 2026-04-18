@@ -285,6 +285,29 @@ export function FoodTracker({ today, initialLogs, targets }: Props) {
             <MacroBar label="Carbs"   consumed={totalConsumed.carbs}   target={targets.carbs}   color="#34d399" />
             <MacroBar label="Fat"     consumed={totalConsumed.fat}      target={targets.fat}     color="#fbbf24" />
           </div>
+          {/* Remaining macros summary */}
+          <div className="mt-5 pt-4 border-t border-[rgba(255,255,255,0.06)]">
+            <p className="text-[10px] font-['Syne'] font-bold uppercase tracking-[1.5px] text-[rgba(255,255,255,0.25)] mb-2.5">Remaining today</p>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-[rgba(255,255,255,0.03)] rounded-[10px] px-3 py-2.5 col-span-2">
+                <p className="text-[12px] text-[rgba(255,255,255,0.45)]">
+                  <span className="font-['Syne'] font-black text-[15px] text-[#FF8A65]">
+                    {Math.max(0, Math.round(targets.calories - totalConsumed.calories)).toLocaleString()} kcal
+                  </span>
+                  {" "}remaining
+                  {targets.protein && (
+                    <> · <span className="text-blue-400 font-medium">{Math.max(0, Math.round(targets.protein - totalConsumed.protein))}g protein</span></>
+                  )}
+                  {targets.carbs && (
+                    <> · <span className="text-green-400 font-medium">{Math.max(0, Math.round(targets.carbs - totalConsumed.carbs))}g carbs</span></>
+                  )}
+                  {targets.fat && (
+                    <> · <span className="text-yellow-400 font-medium">{Math.max(0, Math.round(targets.fat - totalConsumed.fat))}g fat</span></>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[14px] p-6 text-center">
@@ -349,9 +372,14 @@ export function FoodTracker({ today, initialLogs, targets }: Props) {
               {suggestions?.macro === lowMacro ? (
                 <div className="space-y-2 mt-3">
                   {suggestions.items.map((s, i) => (
-                    <div key={i} className="bg-[rgba(255,255,255,0.04)] rounded-[8px] px-3 py-2 flex justify-between text-[12px]">
+                    <div key={i} className="bg-[rgba(255,255,255,0.04)] rounded-[8px] px-3 py-2 flex justify-between text-[12px] gap-2">
                       <span className="text-[rgba(255,255,255,0.7)]">{s.name}</span>
-                      <span className="text-amber-400 font-medium">{s.calories} kcal</span>
+                      <span className="shrink-0 text-amber-400 font-medium">
+                        {s.calories} kcal
+                        {(s as unknown as Record<string, number>)[lowMacro] && (
+                          <> · {(s as unknown as Record<string, number>)[lowMacro]}g {lowMacro}</>
+                        )}
+                      </span>
                     </div>
                   ))}
                 </div>

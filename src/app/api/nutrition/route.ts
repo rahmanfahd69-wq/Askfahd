@@ -14,13 +14,21 @@ Account for size descriptions like "big", "small", "large plate", "cup", "bowl" 
 If multiple foods are listed, create separate items for each. No explanations, only JSON.`;
 
 function suggestPrompt(macro: string, currentG: number, targetG: number) {
-  return `A fitness client needs more ${macro} in their diet. They have consumed ${currentG}g out of their ${targetG}g daily target (${Math.round((currentG / targetG) * 100)}% met).
-Suggest 4 high-${macro}, relatively low-calorie foods to help them hit their target.
-Return ONLY valid JSON in this exact format:
+  const remaining = Math.round(targetG - currentG);
+  return `A fitness client in Kerala, India needs more ${macro} in their diet. They have consumed ${currentG}g out of their ${targetG}g daily target (${remaining}g remaining).
+
+Suggest 4 Kerala-appropriate, high-${macro} foods they can eat to hit their target. Prefer:
+- Eggs, chicken breast, fish (Kerala-style), paneer, whey protein
+- Puttu, idly, dosa, appam, rice, sambar, avial, thoran, fish curry, egg curry, chapati
+- Bananas, roasted chickpeas, boiled groundnuts
+
+AVOID: salmon, Greek yogurt, quinoa, kale, avocado, turkey, cottage cheese.
+
+Return ONLY valid JSON:
 {
   "suggestions": [
-    { "name": "Greek Yogurt (plain, 150g)", "calories": 90, "${macro}": 15 },
-    { "name": "Chicken Breast (100g)", "calories": 165, "${macro}": 31 }
+    { "name": "Boiled eggs (2 nos)", "calories": 140, "${macro}": 12, "carbs": 1, "fat": 10 },
+    { "name": "Chicken breast 100g (grilled)", "calories": 165, "${macro}": 31, "carbs": 0, "fat": 4 }
   ]
 }
 No explanations, only JSON.`;
@@ -53,7 +61,7 @@ export async function POST(req: NextRequest) {
           model: "claude-haiku-4-5-20251001",
           max_tokens: 512,
           system: suggestPrompt(macro, current ?? 0, target),
-          messages: [{ role: "user", content: `Give me 4 foods high in ${macro}.` }],
+          messages: [{ role: "user", content: `Give me 4 Kerala-style foods high in ${macro}.` }],
         }),
       });
 

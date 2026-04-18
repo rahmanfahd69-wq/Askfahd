@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const [clientRes, profileRes] = await Promise.all([
       supabase
         .from("clients")
-        .select("trainer_id, goals, injuries, notes, age, gender, weight_kg, height_cm, activity_level, diet_type")
+        .select("trainer_id, goals, injuries, notes, trainer_notes, ai_instructions, age, gender, weight_kg, height_cm, activity_level, diet_type")
         .eq("id", user.id)
         .single(),
       supabase.from("profiles").select("full_name").eq("id", user.id).single(),
@@ -27,20 +27,44 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No trainer assigned yet. Ask admin to assign you a trainer." }, { status: 400 });
     }
 
-    const [trainerRes, trainerProfileRes] = await Promise.all([
+    const [trainerRes, trainerProfileRes, activePlanRes] = await Promise.all([
       supabase.from("trainers").select("ai_name, ai_system_prompt, coaching_style").eq("id", clientData.trainer_id).single(),
       supabase.from("profiles").select("full_name").eq("id", clientData.trainer_id).single(),
+      supabase
+        .from("plans")
+        .select("content, type")
+        .eq("client_id", user.id)
+        .eq("is_active", true)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
 
     const aiName = trainerRes.data?.ai_name || "Coach";
     const trainerName = trainerProfileRes.data?.full_name || "your trainer";
 
+    // Extract macro targets from active plan
+    type PlanContent = {
+      nutrition?: { daily_calories?: number; macros?: { protein_g?: number; carbs_g?: number; fats_g?: number } };
+      daily_calories?: number;
+      macros?: { protein_g?: number; carbs_g?: number; fats_g?: number };
+    };
+    const pc = activePlanRes.data?.content as PlanContent | null;
+    const n = pc?.nutrition;
+    const macros = {
+      calories: n?.daily_calories ?? pc?.daily_calories ?? null,
+      protein:  n?.macros?.protein_g  ?? pc?.macros?.protein_g  ?? null,
+      carbs:    n?.macros?.carbs_g    ?? pc?.macros?.carbs_g    ?? null,
+      fat:      n?.macros?.fats_g     ?? pc?.macros?.fats_g     ?? null,
+    };
+
     const systemPrompt = buildSystemPrompt({
       aiName,
       trainerName,
       trainerSystemPrompt: trainerRes.data?.ai_system_prompt,
-      coachingStyle: trainerRes.data?.coaching_style,
+      aiInstructions: clientData.ai_instructions,
       client: { ...clientData, full_name: profileRes.data?.full_name },
+      macros,
     });
 
     // Create session if needed
@@ -127,7 +151,7 @@ function buildSystemPrompt(opts: {
   aiName: string;
   trainerName: string;
   trainerSystemPrompt: string | null | undefined;
-  coachingStyle: string | null | undefined;
+  aiInstructions: string | null | undefined;
   client: {
     full_name?: string | null;
     age?: number | null;
@@ -140,29 +164,50 @@ function buildSystemPrompt(opts: {
     height_cm?: number | null;
     diet_type?: string | null;
   };
+  macros: {
+    calories: number | null;
+    protein: number | null;
+    carbs: number | null;
+    fat: number | null;
+  };
 }): string {
-  const { aiName, trainerName, trainerSystemPrompt, coachingStyle, client } = opts;
+  const { aiName, trainerName, trainerSystemPrompt, aiInstructions, client, macros } = opts;
   const name = client.full_name?.split(" ")[0] || "the client";
+  const trainerFirst = trainerName.split(" ")[0];
 
-  return `You are ${aiName}, a personal AI fitness coach for ${name}.
-${trainerSystemPrompt ? `\nTRAINER INSTRUCTIONS:\n${trainerSystemPrompt}\n` : ""}${coachingStyle ? `\nCOACHING STYLE: ${coachingStyle}\n` : ""}
+  const macroLine = macros.calories
+    ? `Calories: ${macros.calories} kcal/day | Protein: ${macros.protein ?? "?"}g | Carbs: ${macros.carbs ?? "?"}g | Fat: ${macros.fat ?? "?"}g`
+    : "No active plan set yet — targets not available";
+
+  return `You are ${aiName}, a fitness coach assistant working under Coach ${trainerName}.
+
+IMPORTANT RULES:
+- You are an ASSISTANT to the trainer, NOT a replacement. Always refer to the trainer as the expert.
+- NEVER give medical diagnoses or contradict the trainer's notes.
+- If asked about something outside the client's plan, say "Let me check with Coach ${trainerFirst} on this."
+- If ${name} mentions new pain or injury, say "Please let Coach ${trainerFirst} know about this directly."
+- Only recommend exercises and foods that align with the client's assessment and trainer's notes.
+- For food recommendations, focus on Kerala-specific foods (idly, dosa, puttu, appam, rice, sambar, avial, thoran, fish curry, egg curry, chicken breast, eggs, whey protein, paneer). NEVER recommend salmon, Greek yogurt, quinoa, kale, avocado, turkey, or cottage cheese unless the client's diet or location suggests these are available and appropriate.
+- Keep responses practical, motivating, and concise.
+
 CLIENT PROFILE:
-- Name: ${name}
-- Age: ${client.age ?? "Not specified"}
-- Gender: ${client.gender ?? "Not specified"}
-- Weight: ${client.weight_kg ? `${client.weight_kg} kg` : "Not specified"}
-- Height: ${client.height_cm ? `${client.height_cm} cm` : "Not specified"}
-- Goals: ${client.goals?.length ? client.goals.join(", ") : "Not specified"}
-- Activity level: ${client.activity_level ?? "Not specified"}
-- Diet type: ${client.diet_type ?? "Not specified"}
-- Injuries/Limitations: ${client.injuries?.length ? client.injuries.join(", ") : "None"}
-- Medical notes: ${client.notes ?? "None"}
+Name: ${name}
+Age: ${client.age ?? "Not specified"} | Gender: ${client.gender ?? "Not specified"}
+Height: ${client.height_cm ? `${client.height_cm} cm` : "Not specified"} | Weight: ${client.weight_kg ? `${client.weight_kg} kg` : "Not specified"}
+Goals: ${client.goals?.length ? client.goals.join(", ") : "Not specified"}
+Activity Level: ${client.activity_level ?? "Not specified"}
+Diet Type: ${client.diet_type ?? "Not specified"}
+Injuries / Limitations: ${client.injuries?.length ? client.injuries.join(", ") : "None reported"}
+Medical Notes: ${client.notes ?? "None"}
 
-MANDATORY GUARDRAILS — never break these:
-1. You are NOT a medical professional. Never diagnose, prescribe, or replace professional medical advice.
-2. If ${name} mentions any new injury, pain, or health concern, respond: "I've noted this — please discuss directly with ${trainerName} before we continue with this area." Then offer to work on unaffected areas.
-3. Only recommend exercises and nutrition consistent with the profile above, especially existing injuries.
-4. When giving specific advice based on their data, say "Based on your profile and current plan, ..."
-5. Always encourage consulting ${trainerName} for significant program changes.
-6. Keep responses practical, motivating, and focused on their goals. Be concise.`;
+TRAINER'S NOTES ABOUT THIS CLIENT:
+${aiInstructions?.trim() || "No specific instructions set by trainer."}
+
+TRAINER'S SPECIFIC INSTRUCTIONS:
+${trainerSystemPrompt?.trim() || "Follow standard coaching best practices."}
+
+CURRENT ACTIVE PLAN:
+${macroLine}
+
+Answer ONLY based on the above information. If information is missing, say so honestly. Always recommend the client speak to Coach ${trainerFirst} for major changes to their programme.`;
 }

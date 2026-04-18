@@ -51,18 +51,23 @@ export async function updateClientProfile(clientId: string, formData: FormData) 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
-  const goals        = (formData.get("goals") as string || "").split(",").map((s) => s.trim()).filter(Boolean);
-  const injuries     = (formData.get("injuries") as string || "").split(",").map((s) => s.trim()).filter(Boolean);
-  const age          = formData.get("age") ? Number(formData.get("age")) : null;
-  const gender       = formData.get("gender") as string;
-  const heightCm     = formData.get("height_cm") ? Number(formData.get("height_cm")) : null;
-  const weightKg     = formData.get("weight_kg") ? Number(formData.get("weight_kg")) : null;
-  const activityLevel = formData.get("activity_level") as string;
-  const gymAccess    = formData.get("gym_access") as string;
-  const dietType     = formData.get("diet_type") as string;
-  const notes        = formData.get("notes") as string;
-  const ptStart      = formData.get("pt_start_date") as string;
-  const ptEnd        = formData.get("pt_end_date") as string;
+  const goals             = (formData.get("goals") as string || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const injuries          = (formData.get("injuries") as string || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const age               = formData.get("age") ? Number(formData.get("age")) : null;
+  const gender            = formData.get("gender") as string;
+  const heightCm          = formData.get("height_cm") ? Number(formData.get("height_cm")) : null;
+  const weightKg          = formData.get("weight_kg") ? Number(formData.get("weight_kg")) : null;
+  const activityLevel     = formData.get("activity_level") as string;
+  const gymAccess         = formData.get("gym_access") as string;
+  const dietType          = formData.get("diet_type") as string;
+  const notes             = formData.get("notes") as string;
+  const ptStart           = formData.get("pt_start_date") as string;
+  const ptEnd             = formData.get("pt_end_date") as string;
+  const requirements      = formData.get("requirements") as string;
+  const medicalConditions = formData.get("medical_conditions") as string;
+  const medications       = formData.get("medications") as string;
+  const allergies         = formData.get("allergies") as string;
+  const aiInstructions    = formData.get("ai_instructions") as string;
 
   const { error } = await supabase
     .from("clients")
@@ -79,6 +84,11 @@ export async function updateClientProfile(clientId: string, formData: FormData) 
       notes: notes || null,
       pt_start_date: ptStart || null,
       pt_end_date: ptEnd || null,
+      requirements: requirements || null,
+      medical_conditions: medicalConditions || null,
+      medications: medications || null,
+      allergies: allergies || null,
+      ai_instructions: aiInstructions || null,
     })
     .eq("id", clientId)
     .eq("trainer_id", user.id);

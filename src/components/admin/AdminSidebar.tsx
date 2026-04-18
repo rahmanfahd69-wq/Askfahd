@@ -71,16 +71,19 @@ export function AdminSidebar() {
       </aside>
 
       {/* ── Mobile: top header ── */}
-      <header className="md:hidden fixed top-0 inset-x-0 z-40 h-14 bg-[#050505]/95 backdrop-blur-md border-b border-[rgba(255,255,255,0.07)] flex items-center justify-between px-4">
-        <Logo href="/admin" size="sm" />
-        <span className="text-[10px] font-['Syne'] font-bold uppercase tracking-[2px] text-[rgba(255,87,34,0.6)]">Admin</span>
-        <button
-          onClick={() => setMobileOpen(true)}
-          className="w-10 h-10 flex items-center justify-center rounded-[8px] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
-          aria-label="Open menu"
-        >
-          <Menu size={20} />
-        </button>
+      <header className="md:hidden fixed top-0 inset-x-0 z-40 bg-[#050505]/95 backdrop-blur-md border-b border-[rgba(255,255,255,0.07)]">
+        <div style={{ height: "env(safe-area-inset-top)" }} />
+        <div className="h-14 flex items-center justify-between px-4">
+          <Logo href="/admin" size="sm" />
+          <span className="text-[10px] font-['Syne'] font-bold uppercase tracking-[2px] text-[rgba(255,87,34,0.6)]">Admin</span>
+          <button
+            onClick={() => setMobileOpen(true)}
+            className="w-10 h-10 flex items-center justify-center rounded-[8px] text-[rgba(255,255,255,0.6)] hover:bg-[rgba(255,255,255,0.06)] transition-colors"
+            aria-label="Open menu"
+          >
+            <Menu size={20} />
+          </button>
+        </div>
       </header>
 
       {/* ── Mobile: drawer overlay ── */}

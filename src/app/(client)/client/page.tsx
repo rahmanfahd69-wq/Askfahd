@@ -47,7 +47,7 @@ export default async function ClientDashboard() {
   const profile = profileData as { full_name: string; role: Role } | null;
   if (profile?.role !== "client") redirect("/login");
 
-  const [clientRes, planRes] = await Promise.all([
+  const [clientRes, planRes, latestAssessmentRes] = await Promise.all([
     supabase
       .from("clients")
       .select("trainer_id, onboarding_done, goals, pt_end_date")
@@ -61,10 +61,22 @@ export default async function ClientDashboard() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("assessments")
+      .select("created_at")
+      .eq("client_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
   ]);
 
-  const clientData = clientRes.data;
-  const activePlan = planRes.data;
+  const clientData    = clientRes.data;
+  const activePlan    = planRes.data;
+  const lastAssessment = latestAssessmentRes.data;
+
+  const weeklyCheckInDue = clientData?.onboarding_done && lastAssessment
+    ? (Date.now() - new Date(lastAssessment.created_at).getTime()) > 7 * 24 * 60 * 60 * 1000
+    : false;
 
   let trainerName: string | null     = null;
   let trainerPhoto: string | null    = null;
@@ -112,11 +124,23 @@ export default async function ClientDashboard() {
       {!clientData?.onboarding_done && (
         <div className="bg-[rgba(255,87,34,0.06)] border border-[rgba(255,87,34,0.2)] rounded-[14px] p-5 flex items-center justify-between gap-4">
           <div>
-            <p className="font-['Syne'] font-bold text-[14px] text-[#FF8A65] mb-1">Complete your assessment</p>
-            <p className="text-[12px] text-[rgba(255,255,255,0.45)]">Your coach needs your details to build a personalised plan.</p>
+            <p className="font-['Syne'] font-bold text-[14px] text-[#FF8A65] mb-1">Complete your assessment to get started</p>
+            <p className="text-[12px] text-[rgba(255,255,255,0.45)]">Complete your assessment to get started with your personalised plan.</p>
           </div>
           <Link href="/client/assessment/new" className="shrink-0 bg-[#FF5722] text-white font-['Syne'] font-bold text-[11px] uppercase tracking-[1.5px] px-4 py-2.5 rounded-[8px] hover:bg-[#FF8A65] transition-colors min-h-[44px] flex items-center">
             Start →
+          </Link>
+        </div>
+      )}
+
+      {weeklyCheckInDue && (
+        <div className="bg-[rgba(96,165,250,0.06)] border border-[rgba(96,165,250,0.2)] rounded-[14px] p-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="font-['Syne'] font-bold text-[14px] text-blue-400 mb-1">Weekly check-in due</p>
+            <p className="text-[12px] text-[rgba(255,255,255,0.45)]">Update your stats so your AI coach and trainer stay accurate.</p>
+          </div>
+          <Link href="/client/assessment/new" className="shrink-0 bg-blue-500 text-white font-['Syne'] font-bold text-[11px] uppercase tracking-[1.5px] px-4 py-2.5 rounded-[8px] hover:bg-blue-400 transition-colors min-h-[44px] flex items-center">
+            Check in →
           </Link>
         </div>
       )}

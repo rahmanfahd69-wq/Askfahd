@@ -61,6 +61,11 @@ interface Props {
     injuries: string[];
     notes: string | null;
     trainer_notes: string | null;
+    ai_instructions: string | null;
+    requirements: string | null;
+    medical_conditions: string | null;
+    medications: string | null;
+    allergies: string | null;
     pt_start_date: string | null;
     pt_end_date: string | null;
   };
@@ -235,8 +240,44 @@ function ProfileTab({ clientId, profile }: { clientId: string; profile: Props["p
       </div>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="pr-notes">Medical Notes</Label>
-        <Textarea id="pr-notes" name="notes" defaultValue={profile.notes || ""} placeholder="Medical history, medications…" rows={3} />
+        <Label htmlFor="pr-medical">Medical Conditions</Label>
+        <Input id="pr-medical" name="medical_conditions" defaultValue={profile.medical_conditions || ""} placeholder="Diabetes, hypertension…" />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="pr-medications">Medications</Label>
+        <Input id="pr-medications" name="medications" defaultValue={profile.medications || ""} placeholder="Medications relevant to training or nutrition…" />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="pr-allergies">Food Allergies</Label>
+        <Input id="pr-allergies" name="allergies" defaultValue={profile.allergies || ""} placeholder="Peanuts, dairy, gluten…" />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="pr-requirements">Specific Requirements</Label>
+        <Textarea id="pr-requirements" name="requirements" defaultValue={profile.requirements || ""} placeholder="Prefers morning workouts, needs low-impact alternatives, fasting schedule…" rows={2} />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="pr-notes">General Notes</Label>
+        <Textarea id="pr-notes" name="notes" defaultValue={profile.notes || ""} placeholder="Other medical history or context…" rows={2} />
+      </div>
+
+      <div className="flex flex-col gap-2 border border-[rgba(255,87,34,0.2)] rounded-[10px] p-4 bg-[rgba(255,87,34,0.03)]">
+        <Label htmlFor="pr-ai" className="text-[#FF8A65]">
+          AI Instructions — What should your AI coach know about this client?
+        </Label>
+        <Textarea
+          id="pr-ai"
+          name="ai_instructions"
+          defaultValue={profile.ai_instructions || ""}
+          placeholder="e.g. Client has bad knees - no jumping exercises. Prefers morning workouts. Vegetarian. Suggest Kerala-style meals only."
+          rows={4}
+        />
+        <p className="text-[11px] text-[rgba(255,87,34,0.5)]">
+          This is injected into the AI coach's context. Use it to guide recommendations for this specific client.
+        </p>
       </div>
 
       {error && (

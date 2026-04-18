@@ -75,6 +75,7 @@ export default async function TrainerClients() {
         <div className="space-y-2.5">
           {clients.map((client) => {
             const p  = profileMap[client.id];
+            const displayName = p?.full_name?.trim() || p?.email?.split("@")[0] || "Client";
             const pt = getPTStatus(client.pt_end_date);
             const goals = (client.goals || []).slice(0, 3) as string[];
             return (
@@ -84,12 +85,12 @@ export default async function TrainerClients() {
                 className="card-glow flex items-center gap-4 px-5 py-4 bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[14px] group"
               >
                 <Avatar className="w-11 h-11 shrink-0">
-                  <AvatarFallback>{getInitials(p?.full_name || "?")}</AvatarFallback>
+                  <AvatarFallback>{getInitials(displayName)}</AvatarFallback>
                 </Avatar>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <p className="font-['Syne'] font-bold text-[15px]">{p?.full_name || "—"}</p>
+                    <p className="font-['Syne'] font-bold text-[15px]">{displayName}</p>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
                       client.is_active ? "bg-green-500/10 text-green-400" : "bg-red-500/10 text-red-400"
                     }`}>

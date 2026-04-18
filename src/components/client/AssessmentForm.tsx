@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 const GOALS = ["Weight loss", "Muscle gain", "Endurance", "Flexibility", "General fitness", "Stress relief", "Sport-specific"];
 const ACTIVITY_LEVELS = ["Sedentary", "Lightly active", "Moderately active", "Very active", "Extremely active"];
 const GYM_OPTIONS     = ["Full gym", "Home gym", "No equipment", "Outdoor only"];
-const DIET_TYPES      = ["No restriction", "Vegetarian", "Vegan", "Halal", "Keto", "Paleo", "Gluten-free"];
+const DIET_TYPES      = ["No restriction", "Vegetarian", "Kerala vegetarian", "Vegan", "Halal", "Keto", "Paleo", "Gluten-free"];
 const SLEEP_OPTIONS   = ["Less than 6h", "6-7h", "7-8h", "8h+"];
 const STRESS_OPTIONS  = ["Low", "Moderate", "High", "Very high"];
 const WORK_OPTIONS    = ["Part-time (<30h)", "Full-time (30-45h)", "Overtime (45h+)"];

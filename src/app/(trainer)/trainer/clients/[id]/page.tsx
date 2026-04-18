@@ -36,7 +36,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
   const [clientRes, clientProfileRes, plansRes, chatRes, foodLogsRes] = await Promise.all([
     supabase
       .from("clients")
-      .select("trainer_id, age, gender, height_cm, weight_kg, goals, activity_level, gym_access, diet_type, sleep_hours, stress_level, work_hours, injuries, notes, trainer_notes, pt_start_date, pt_end_date, is_active, updated_at")
+      .select("trainer_id, age, gender, height_cm, weight_kg, goals, activity_level, gym_access, diet_type, sleep_hours, stress_level, work_hours, injuries, notes, trainer_notes, ai_instructions, requirements, medical_conditions, medications, allergies, pt_start_date, pt_end_date, is_active, updated_at")
       .eq("id", clientId)
       .eq("trainer_id", user.id)
       .single(),
@@ -67,7 +67,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
   const plans         = plansRes.data || [];
   const chatMessages  = chatRes.data || [];
   const foodLogs      = foodLogsRes.data || [];
-  const clientName    = clientProfile?.full_name || "Client";
+  const clientName    = clientProfile?.full_name?.trim() || clientProfile?.email?.split("@")[0] || "Client";
   const ptBadge       = getPTBadge(client.pt_end_date);
 
   // Extract nutrition targets from active plan
@@ -129,19 +129,24 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
         clientId={clientId}
         clientName={clientName}
         profile={{
-          age:            client.age,
-          gender:         client.gender,
-          height_cm:      client.height_cm,
-          weight_kg:      client.weight_kg,
-          goals:          client.goals,
-          activity_level: client.activity_level,
-          gym_access:     client.gym_access,
-          diet_type:      client.diet_type,
-          injuries:       client.injuries,
-          notes:          client.notes,
-          trainer_notes:  client.trainer_notes,
-          pt_start_date:  client.pt_start_date,
-          pt_end_date:    client.pt_end_date,
+          age:               client.age,
+          gender:            client.gender,
+          height_cm:         client.height_cm,
+          weight_kg:         client.weight_kg,
+          goals:             client.goals,
+          activity_level:    client.activity_level,
+          gym_access:        client.gym_access,
+          diet_type:         client.diet_type,
+          injuries:          client.injuries,
+          notes:             client.notes,
+          trainer_notes:     client.trainer_notes,
+          ai_instructions:   client.ai_instructions,
+          requirements:      client.requirements,
+          medical_conditions: client.medical_conditions,
+          medications:       client.medications,
+          allergies:         client.allergies,
+          pt_start_date:     client.pt_start_date,
+          pt_end_date:       client.pt_end_date,
         }}
         plans={plans as Parameters<typeof ClientDetailTabs>[0]["plans"]}
         chatMessages={chatMessages}
