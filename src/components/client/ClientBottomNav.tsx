@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Dumbbell, MessageCircle, ClipboardList, User } from "lucide-react";
+import { LayoutDashboard, Dumbbell, MessageCircle, UtensilsCrossed, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/client",            label: "Home",     icon: LayoutDashboard },
-  { href: "/client/plan",       label: "Plan",     icon: Dumbbell },
-  { href: "/client/chat",       label: "Chat",     icon: MessageCircle },
-  { href: "/client/assessment", label: "Assess",   icon: ClipboardList },
-  { href: "/client/profile",    label: "Me",       icon: User },
+  { href: "/client",          label: "Home",    icon: LayoutDashboard },
+  { href: "/client/plan",     label: "Plan",    icon: Dumbbell },
+  { href: "/client/chat",     label: "Chat",    icon: MessageCircle },
+  { href: "/client/tracker",  label: "Tracker", icon: UtensilsCrossed },
+  { href: "/client/profile",  label: "Me",      icon: User },
 ];
 
 export function ClientBottomNav() {

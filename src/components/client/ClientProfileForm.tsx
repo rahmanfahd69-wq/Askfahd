@@ -171,11 +171,17 @@ export function ClientProfileForm({ data }: Props) {
         </p>
       )}
 
-      <div className="flex items-center gap-3">
-        <Button variant="primary" size="sm" type="submit" disabled={saving}>
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <Button
+          variant="primary"
+          size="sm"
+          type="submit"
+          disabled={saving}
+          className="w-full sm:w-auto justify-center text-[14px] py-3 sm:py-2 min-h-[48px] sm:min-h-0"
+        >
           {saving ? "Saving…" : "Save Changes"}
         </Button>
-        {saved && <span className="text-[12px] text-green-400">Saved!</span>}
+        {saved && <span className="text-[13px] text-green-400 text-center sm:text-left">Saved!</span>}
       </div>
     </form>
   );

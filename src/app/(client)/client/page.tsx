@@ -97,7 +97,7 @@ export default async function ClientDashboard() {
   const macros       = planContent ? getMacros(planContent) : null;
 
   return (
-    <div className="animate-fade-up space-y-6 max-w-2xl">
+    <div className="animate-fade-up space-y-6 max-w-2xl px-0 sm:px-0">
       {/* ── Header ── */}
       <div>
         <h1 className="font-['Syne'] font-black text-[clamp(28px,5vw,40px)] leading-tight">
@@ -193,17 +193,17 @@ export default async function ClientDashboard() {
 
       {/* ── Coach Card ── */}
       {trainerName && (
-        <div className="bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[14px] p-6">
+        <div className="bg-[rgba(255,87,34,0.05)] border border-[rgba(255,87,34,0.18)] rounded-[14px] p-5 sm:p-6">
           <div className="flex items-center gap-4 mb-5">
-            <Avatar className="w-14 h-14 shrink-0">
+            <Avatar className="w-16 h-16 sm:w-14 sm:h-14 shrink-0">
               {trainerPhoto
                 ? <img src={trainerPhoto} alt={trainerName} className="w-full h-full object-cover rounded-full" />
-                : <AvatarFallback className="text-base">{getInitials(trainerName)}</AvatarFallback>
+                : <AvatarFallback className="text-lg">{getInitials(trainerName)}</AvatarFallback>
               }
             </Avatar>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-['Syne'] font-bold uppercase tracking-[2px] text-[rgba(255,255,255,0.3)] mb-0.5">Your Coach</p>
-              <p className="font-['Syne'] font-bold text-[16px]">{trainerName}</p>
+              <p className="text-[10px] font-['Syne'] font-bold uppercase tracking-[2px] text-[rgba(255,87,34,0.6)] mb-0.5">Your Coach</p>
+              <p className="font-['Syne'] font-bold text-[18px] sm:text-[16px]">{trainerName}</p>
               {trainerSpecs.length > 0 && (
                 <p className="text-[12px] text-[rgba(255,255,255,0.4)] mt-0.5">{trainerSpecs.slice(0, 2).join(" · ")}</p>
               )}
@@ -212,24 +212,25 @@ export default async function ClientDashboard() {
 
           <Link
             href="/client/chat"
-            className="flex items-center justify-center gap-2.5 w-full bg-[#FF5722] hover:bg-[#FF8A65] text-white font-['Syne'] font-bold text-[14px] px-5 py-3.5 rounded-[10px] transition-colors min-h-[48px] mb-3"
+            className="flex items-center justify-center gap-2.5 w-full bg-[#FF5722] hover:bg-[#FF8A65] text-white font-['Syne'] font-bold text-[15px] sm:text-[14px] px-5 py-4 sm:py-3.5 rounded-[10px] transition-colors min-h-[56px] sm:min-h-[48px] mb-3"
           >
-            <MessageCircle size={16} />
-            Chat with Coach {trainerName.split(" ")[0]}
+            <MessageCircle size={18} className="sm:hidden" />
+            <MessageCircle size={16} className="hidden sm:block" />
+            Ask Coach {trainerName.split(" ")[0]}
           </Link>
 
           {(waHref || igHref) && (
             <div className="flex gap-2">
               {waHref && (
                 <a href={waHref} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[8px] bg-green-500/8 border border-green-500/15 text-green-400 text-[12px] font-['Syne'] font-bold hover:bg-green-500/12 transition-colors min-h-[44px]">
-                  <Phone size={13} /> WhatsApp
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-[8px] bg-green-500/8 border border-green-500/15 text-green-400 text-[13px] sm:text-[12px] font-['Syne'] font-bold hover:bg-green-500/12 transition-colors min-h-[48px] sm:min-h-[44px]">
+                  <Phone size={14} /> WhatsApp
                 </a>
               )}
               {igHref && (
                 <a href={igHref} target="_blank" rel="noopener noreferrer"
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[8px] bg-pink-500/8 border border-pink-500/15 text-pink-400 text-[12px] font-['Syne'] font-bold hover:bg-pink-500/12 transition-colors min-h-[44px]">
-                  <AtSign size={13} /> Instagram
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 rounded-[8px] bg-pink-500/8 border border-pink-500/15 text-pink-400 text-[13px] sm:text-[12px] font-['Syne'] font-bold hover:bg-pink-500/12 transition-colors min-h-[48px] sm:min-h-[44px]">
+                  <AtSign size={14} /> Instagram
                 </a>
               )}
             </div>

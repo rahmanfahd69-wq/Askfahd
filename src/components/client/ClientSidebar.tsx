@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Dumbbell, MessageCircle, ClipboardList, User } from "lucide-react";
+import { LayoutDashboard, Dumbbell, MessageCircle, UtensilsCrossed, User } from "lucide-react";
 import { Logo } from "@/components/shared/Logo";
 import { LogoutButton } from "@/components/shared/LogoutButton";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/client",            label: "Dashboard",  icon: LayoutDashboard },
-  { href: "/client/plan",       label: "My Plan",    icon: Dumbbell },
-  { href: "/client/chat",       label: "Chat",       icon: MessageCircle },
-  { href: "/client/assessment", label: "Assessment", icon: ClipboardList },
-  { href: "/client/profile",    label: "Profile",    icon: User },
+  { href: "/client",           label: "Dashboard",  icon: LayoutDashboard },
+  { href: "/client/plan",      label: "My Plan",    icon: Dumbbell },
+  { href: "/client/chat",      label: "Chat",       icon: MessageCircle },
+  { href: "/client/tracker",   label: "Tracker",    icon: UtensilsCrossed },
+  { href: "/client/profile",   label: "Profile",    icon: User },
 ];
 
 export function ClientSidebar() {

@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ClientProfileForm } from "@/components/client/ClientProfileForm";
 import { getInitials } from "@/lib/utils";
 import type { Role } from "@/lib/supabase/types";
-import { Phone, AtSign } from "lucide-react";
+import { Phone, AtSign, MessageCircle } from "lucide-react";
 
 export default async function ClientProfile() {
   const supabase = await createClient();
@@ -46,7 +47,7 @@ export default async function ClientProfile() {
     : null;
 
   return (
-    <div className="animate-fade-up space-y-8 max-w-lg">
+    <div className="animate-fade-up space-y-8 max-w-lg px-0 sm:px-0">
       <div>
         <p className="text-[11px] font-['Syne'] font-bold uppercase tracking-[3px] text-[rgba(255,87,34,0.7)] mb-2">
           My Account
@@ -55,7 +56,7 @@ export default async function ClientProfile() {
       </div>
 
       {/* Profile header card */}
-      <div className="bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[14px] p-6">
+      <div className="bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[14px] p-5 sm:p-6 mx-0">
         <div className="flex items-center gap-4 mb-5">
           <Avatar className="w-16 h-16 text-lg shrink-0">
             <AvatarFallback>{getInitials(name)}</AvatarFallback>
@@ -66,14 +67,9 @@ export default async function ClientProfile() {
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-3 text-[12px] pt-4 border-t border-[rgba(255,255,255,0.06)]">
-          {trainerName && (
-            <span className="text-[rgba(255,255,255,0.4)]">
-              Coach: <span className="text-[#FF8A65] font-medium">{trainerName}</span>
-            </span>
-          )}
-          {clientData?.pt_end_date && (
-            <span className={`font-medium ${
+        {clientData?.pt_end_date && (
+          <div className="pt-4 border-t border-[rgba(255,255,255,0.06)]">
+            <span className={`text-[12px] font-medium ${
               ptDaysLeft !== null && ptDaysLeft < 0
                 ? "text-red-400"
                 : ptDaysLeft !== null && ptDaysLeft <= 14
@@ -82,26 +78,44 @@ export default async function ClientProfile() {
             }`}>
               PT until {new Date(clientData.pt_end_date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
             </span>
-          )}
-        </div>
-
-        {(waHref || igHref) && (
-          <div className="flex gap-2 mt-4">
-            {waHref && (
-              <a href={waHref} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-[8px] bg-green-500/8 border border-green-500/15 text-green-400 text-[12px] font-['Syne'] font-bold hover:bg-green-500/12 transition-colors min-h-[44px]">
-                <Phone size={13} /> WhatsApp Coach
-              </a>
-            )}
-            {igHref && (
-              <a href={igHref} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3 py-2 rounded-[8px] bg-pink-500/8 border border-pink-500/15 text-pink-400 text-[12px] font-['Syne'] font-bold hover:bg-pink-500/12 transition-colors min-h-[44px]">
-                <AtSign size={13} /> Instagram
-              </a>
-            )}
           </div>
         )}
       </div>
+
+      {/* Coach card — prominent */}
+      {trainerName && (
+        <div className="bg-[rgba(255,87,34,0.05)] border border-[rgba(255,87,34,0.18)] rounded-[14px] p-5 sm:p-6">
+          <p className="text-[10px] font-['Syne'] font-bold uppercase tracking-[2px] text-[rgba(255,87,34,0.6)] mb-3">
+            Your Coach
+          </p>
+          <p className="font-['Syne'] font-black text-[22px] text-white mb-4">{trainerName}</p>
+
+          <Link
+            href="/client/chat"
+            className="flex items-center justify-center gap-2.5 w-full bg-[#FF5722] hover:bg-[#FF8A65] text-white font-['Syne'] font-bold text-[14px] px-5 py-3.5 rounded-[10px] transition-colors min-h-[48px] mb-3"
+          >
+            <MessageCircle size={16} />
+            Chat with {trainerName.split(" ")[0]}
+          </Link>
+
+          {(waHref || igHref) && (
+            <div className="flex gap-2">
+              {waHref && (
+                <a href={waHref} target="_blank" rel="noopener noreferrer"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[8px] bg-green-500/8 border border-green-500/15 text-green-400 text-[12px] font-['Syne'] font-bold hover:bg-green-500/12 transition-colors min-h-[44px]">
+                  <Phone size={13} /> WhatsApp
+                </a>
+              )}
+              {igHref && (
+                <a href={igHref} target="_blank" rel="noopener noreferrer"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-[8px] bg-pink-500/8 border border-pink-500/15 text-pink-400 text-[12px] font-['Syne'] font-bold hover:bg-pink-500/12 transition-colors min-h-[44px]">
+                  <AtSign size={13} /> Instagram
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Edit form */}
       <div>

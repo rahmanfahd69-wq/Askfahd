@@ -9,13 +9,31 @@ import { updateClientProfile, updateTrainerNotes } from "@/app/(trainer)/trainer
 import { Loader2, Sparkles, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Tab = "profile" | "plan" | "chat" | "notes";
+type Tab = "profile" | "plan" | "chat" | "notes" | "nutrition";
 
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
   created_at: string;
+}
+
+interface FoodLog {
+  id: string;
+  date: string;
+  food_description: string;
+  total_calories: number;
+  total_protein: number;
+  total_carbs: number;
+  total_fat: number;
+  created_at: string;
+}
+
+interface NutritionTargets {
+  calories: number | null;
+  protein: number | null;
+  carbs: number | null;
+  fat: number | null;
 }
 
 interface Plan {
@@ -48,16 +66,19 @@ interface Props {
   };
   plans: Plan[];
   chatMessages: ChatMessage[];
+  foodLogs: FoodLog[];
+  nutritionTargets: NutritionTargets;
 }
 
-export function ClientDetailTabs({ clientId, clientName, profile, plans, chatMessages }: Props) {
+export function ClientDetailTabs({ clientId, clientName, profile, plans, chatMessages, foodLogs, nutritionTargets }: Props) {
   const [tab, setTab] = useState<Tab>("profile");
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "profile", label: "Profile" },
-    { id: "plan",    label: "Plan" },
-    { id: "chat",    label: "Chat History" },
-    { id: "notes",   label: "Notes" },
+    { id: "profile",   label: "Profile" },
+    { id: "plan",      label: "Plan" },
+    { id: "nutrition", label: "Nutrition" },
+    { id: "chat",      label: "Chat" },
+    { id: "notes",     label: "Notes" },
   ];
 
   return (
@@ -85,6 +106,9 @@ export function ClientDetailTabs({ clientId, clientName, profile, plans, chatMes
       )}
       {tab === "plan" && (
         <PlanTab clientId={clientId} clientName={clientName} plans={plans} />
+      )}
+      {tab === "nutrition" && (
+        <NutritionTab clientName={clientName} logs={foodLogs} targets={nutritionTargets} />
       )}
       {tab === "chat" && (
         <ChatTab clientName={clientName} messages={chatMessages} />
@@ -358,6 +382,88 @@ function PlanCard({ plan, expanded, onToggle }: { plan: Plan; expanded: boolean;
           </pre>
         </div>
       )}
+    </div>
+  );
+}
+
+// ── Nutrition Log Tab ─────────────────────────────────────────
+
+function NutritionTab({ clientName, logs, targets }: { clientName: string; logs: FoodLog[]; targets: NutritionTargets }) {
+  // Group logs by date
+  const byDate = logs.reduce<Record<string, FoodLog[]>>((acc, log) => {
+    if (!acc[log.date]) acc[log.date] = [];
+    acc[log.date].push(log);
+    return acc;
+  }, {});
+
+  const dates = Object.keys(byDate).sort((a, b) => b.localeCompare(a)).slice(0, 30);
+
+  if (dates.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-[13px] text-[rgba(255,255,255,0.35)]">{clientName} hasn&apos;t logged any food yet.</p>
+      </div>
+    );
+  }
+
+  function pctBar(consumed: number, target: number | null) {
+    if (!target || target === 0) return null;
+    const pct = Math.min((consumed / target) * 100, 100);
+    const color = pct >= 90 ? "#34d399" : pct >= 60 ? "#fbbf24" : "#ef4444";
+    return (
+      <div className="flex items-center gap-2 text-[11px]">
+        <div className="flex-1 h-1.5 rounded-full bg-[rgba(255,255,255,0.06)] overflow-hidden">
+          <div className="h-full rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+        </div>
+        <span style={{ color }}>{Math.round(pct)}%</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-[11px] font-['Syne'] font-bold uppercase tracking-[2px] text-[rgba(255,255,255,0.3)]">
+        Last 30 days · read only
+      </p>
+      {dates.map((date) => {
+        const dayLogs = byDate[date];
+        const totals = {
+          calories: dayLogs.reduce((s, l) => s + Number(l.total_calories), 0),
+          protein:  dayLogs.reduce((s, l) => s + Number(l.total_protein), 0),
+          carbs:    dayLogs.reduce((s, l) => s + Number(l.total_carbs), 0),
+          fat:      dayLogs.reduce((s, l) => s + Number(l.total_fat), 0),
+        };
+        const displayDate = new Date(date + "T12:00:00").toLocaleDateString("en-GB", {
+          weekday: "short", day: "numeric", month: "short",
+        });
+
+        return (
+          <div key={date} className="bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[12px] p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-['Syne'] font-bold text-[13px]">{displayDate}</span>
+              <span className="font-['Syne'] font-black text-[15px] text-[#FF8A65]">
+                {Math.round(totals.calories)} kcal
+              </span>
+            </div>
+            <div className="grid grid-cols-3 gap-3 mb-3">
+              {[
+                { label: "Protein", value: totals.protein, target: targets.protein, color: "#60a5fa" },
+                { label: "Carbs",   value: totals.carbs,   target: targets.carbs,   color: "#34d399" },
+                { label: "Fat",     value: totals.fat,     target: targets.fat,     color: "#fbbf24" },
+              ].map(({ label, value, target, color }) => (
+                <div key={label}>
+                  <div className="flex justify-between mb-1">
+                    <span className="text-[10px] text-[rgba(255,255,255,0.4)]">{label}</span>
+                    <span className="text-[10px] font-medium" style={{ color }}>{Math.round(value)}g</span>
+                  </div>
+                  {pctBar(value, target)}
+                </div>
+              ))}
+            </div>
+            {targets.calories && pctBar(totals.calories, targets.calories)}
+          </div>
+        );
+      })}
     </div>
   );
 }

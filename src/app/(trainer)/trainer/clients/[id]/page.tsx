@@ -33,7 +33,7 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
 
   if ((profileData as { role: Role } | null)?.role !== "trainer") redirect("/login");
 
-  const [clientRes, clientProfileRes, plansRes, chatRes] = await Promise.all([
+  const [clientRes, clientProfileRes, plansRes, chatRes, foodLogsRes] = await Promise.all([
     supabase
       .from("clients")
       .select("trainer_id, age, gender, height_cm, weight_kg, goals, activity_level, gym_access, diet_type, sleep_hours, stress_level, work_hours, injuries, notes, trainer_notes, pt_start_date, pt_end_date, is_active, updated_at")
@@ -52,6 +52,12 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
       .eq("client_id", clientId)
       .order("created_at", { ascending: true })
       .limit(200),
+    supabase
+      .from("food_logs")
+      .select("id, date, food_description, total_calories, total_protein, total_carbs, total_fat, created_at")
+      .eq("client_id", clientId)
+      .order("date", { ascending: false })
+      .limit(90),
   ]);
 
   if (!clientRes.data) notFound();
@@ -60,8 +66,20 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
   const clientProfile = clientProfileRes.data;
   const plans         = plansRes.data || [];
   const chatMessages  = chatRes.data || [];
+  const foodLogs      = foodLogsRes.data || [];
   const clientName    = clientProfile?.full_name || "Client";
   const ptBadge       = getPTBadge(client.pt_end_date);
+
+  // Extract nutrition targets from active plan
+  const activePlan = plans.find((p) => p.is_active);
+  const pc = activePlan?.content as { nutrition?: { daily_calories?: number; macros?: { protein_g?: number; carbs_g?: number; fats_g?: number } }; daily_calories?: number; macros?: { protein_g?: number; carbs_g?: number; fats_g?: number } } | null;
+  const n = pc?.nutrition;
+  const nutritionTargets = {
+    calories: n?.daily_calories ?? pc?.daily_calories ?? null,
+    protein:  n?.macros?.protein_g  ?? pc?.macros?.protein_g  ?? null,
+    carbs:    n?.macros?.carbs_g    ?? pc?.macros?.carbs_g    ?? null,
+    fat:      n?.macros?.fats_g     ?? pc?.macros?.fats_g     ?? null,
+  };
 
   return (
     <div className="animate-fade-up">
@@ -127,6 +145,8 @@ export default async function ClientDetail({ params }: { params: Promise<{ id: s
         }}
         plans={plans as Parameters<typeof ClientDetailTabs>[0]["plans"]}
         chatMessages={chatMessages}
+        foodLogs={foodLogs}
+        nutritionTargets={nutritionTargets}
       />
     </div>
   );

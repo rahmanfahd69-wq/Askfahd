@@ -188,6 +188,32 @@ export type Database = {
         };
         Update: Partial<Database["public"]["Tables"]["chat_messages"]["Insert"]>;
       };
+      food_logs: {
+        Row: {
+          id: string;
+          client_id: string;
+          date: string;
+          food_description: string;
+          items: Array<{ name: string; quantity: number; calories: number; protein: number; carbs: number; fat: number }>;
+          total_calories: number;
+          total_protein: number;
+          total_carbs: number;
+          total_fat: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          client_id: string;
+          date?: string;
+          food_description: string;
+          items: Array<{ name: string; quantity: number; calories: number; protein: number; carbs: number; fat: number }>;
+          total_calories: number;
+          total_protein: number;
+          total_carbs: number;
+          total_fat: number;
+        };
+        Update: Partial<Database["public"]["Tables"]["food_logs"]["Insert"]>;
+      };
       usage_events: {
         Row: {
           id: string;
