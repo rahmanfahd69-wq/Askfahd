@@ -81,6 +81,7 @@ export default async function TrackerPage() {
       today={today}
       initialLogs={(logsRes.data || []) as Parameters<typeof FoodTracker>[0]["initialLogs"]}
       targets={targets}
+      onboardingDone={!!onboardingDone}
     />
   );
 }

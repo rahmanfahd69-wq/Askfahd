@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { SendHorizonal, Bot, User, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MarkdownMessage } from "@/components/shared/MarkdownMessage";
 
 interface Message {
   role: "user" | "assistant";
@@ -153,7 +154,11 @@ export function ChatInterface({ clientName, trainerName, hasTrainer }: Props) {
                   Based on your profile and current plan
                 </span>
               )}
-              <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+              {msg.role === "assistant" ? (
+                <MarkdownMessage content={msg.content} />
+              ) : (
+                <p className="text-[14px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+              )}
               <p className={cn(
                 "text-[10px] mt-1.5",
                 msg.role === "user" ? "text-white/50" : "text-[rgba(255,255,255,0.25)]"

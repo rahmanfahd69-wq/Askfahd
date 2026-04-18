@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { submitAssessment } from "@/app/(client)/client/assessment/new/actions";
+import { saveAssessmentData } from "@/app/(client)/client/assessment/new/actions";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
 
-const GOALS = ["Weight loss", "Muscle gain", "Endurance", "Flexibility", "General fitness", "Stress relief", "Sport-specific"];
+const GOALS          = ["Weight loss", "Muscle gain", "Endurance", "Flexibility", "General fitness", "Stress relief", "Sport-specific"];
 const ACTIVITY_LEVELS = ["Sedentary", "Lightly active", "Moderately active", "Very active", "Extremely active"];
-const GYM_OPTIONS     = ["Full gym", "Home gym", "No equipment", "Outdoor only"];
-const DIET_TYPES      = ["No restriction", "Vegetarian", "Kerala vegetarian", "Vegan", "Halal", "Keto", "Paleo", "Gluten-free"];
-const SLEEP_OPTIONS   = ["Less than 6h", "6-7h", "7-8h", "8h+"];
-const STRESS_OPTIONS  = ["Low", "Moderate", "High", "Very high"];
-const WORK_OPTIONS    = ["Part-time (<30h)", "Full-time (30-45h)", "Overtime (45h+)"];
-const GENDER_OPTIONS  = ["Male", "Female", "Other", "Prefer not to say"];
+const GYM_OPTIONS    = ["Full gym", "Home gym", "No equipment", "Outdoor only"];
+const DIET_TYPES     = ["No restriction", "Vegetarian", "Kerala vegetarian", "Vegan", "Halal", "Keto", "Paleo", "Gluten-free"];
+const SLEEP_OPTIONS  = ["Less than 6h", "6-7h", "7-8h", "8h+"];
+const STRESS_OPTIONS = ["Low", "Moderate", "High", "Very high"];
+const WORK_OPTIONS   = ["Part-time (<30h)", "Full-time (30-45h)", "Overtime (45h+)"];
+const GENDER_OPTIONS = ["Male", "Female", "Other", "Prefer not to say"];
 
 const STEPS = [
   { title: "Basic Info",       subtitle: "Tell us about yourself" },
@@ -43,8 +44,12 @@ interface Props {
 }
 
 export function AssessmentForm({ defaultValues, isRetake }: Props) {
-  const [step, setStep] = useState(0);
-  const [error, setError] = useState("");
+  const router = useRouter();
+  const [step, setStep]     = useState(0);
+  const [error, setError]   = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [generatingPlan, setGeneratingPlan] = useState(false);
+  const [planError, setPlanError] = useState("");
 
   // Form state
   const [age, setAge]           = useState(defaultValues?.age?.toString() || "");
@@ -67,10 +72,62 @@ export function AssessmentForm({ defaultValues, isRetake }: Props) {
   async function handleFinalSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
+    setPlanError("");
+    setSubmitting(true);
+
     const fd = new FormData(e.currentTarget);
     goals.forEach((g) => fd.append("goals", g));
-    const result = await submitAssessment(fd);
-    if (result?.error) setError(result.error);
+
+    // Step 1: Save assessment data to DB
+    const result = await saveAssessmentData(fd);
+    if (result?.error) {
+      setError(result.error);
+      setSubmitting(false);
+      return;
+    }
+
+    // Step 2: Show loading screen while generating plan
+    setSubmitting(false);
+    setGeneratingPlan(true);
+
+    try {
+      const res = await fetch("/api/generate-plan-from-assessment", { method: "POST" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error("Plan generation failed:", data.error);
+        // Non-fatal: proceed to plan page even if generation fails
+      }
+    } catch (err) {
+      console.error("Plan generation network error:", err);
+      // Non-fatal: redirect anyway
+    }
+
+    router.refresh();
+    router.push("/client/plan");
+  }
+
+  // ── Loading screen while generating plan ──────────────────
+  if (generatingPlan) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-fade-up">
+        <div className="relative mb-8">
+          <div className="w-20 h-20 rounded-full border-4 border-[rgba(255,87,34,0.15)] flex items-center justify-center">
+            <Loader2 size={32} className="animate-spin text-[#FF5722]" />
+          </div>
+          <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-[#FF5722] animate-spin" style={{ animationDuration: "1.5s" }} />
+        </div>
+        <h2 className="font-['Syne'] font-black text-[24px] mb-3">
+          Generating your personalised plan...
+        </h2>
+        <p className="text-[14px] text-[rgba(255,255,255,0.45)] max-w-xs mb-2">
+          Your AI coach is building a custom workout and nutrition plan based on your assessment.
+        </p>
+        <p className="text-[12px] text-[rgba(255,255,255,0.25)]">This takes about 15–20 seconds</p>
+        {planError && (
+          <p className="mt-4 text-[12px] text-red-400">{planError}</p>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -133,19 +190,13 @@ export function AssessmentForm({ defaultValues, isRetake }: Props) {
               <Label>Gender</Label>
               <div className="grid grid-cols-2 gap-2">
                 {GENDER_OPTIONS.map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => setGender(g)}
+                  <button key={g} type="button" onClick={() => setGender(g)}
                     className={cn(
                       "py-2.5 rounded-[8px] text-[13px] font-medium border transition-all",
                       gender === g
                         ? "bg-[rgba(255,87,34,0.1)] border-[rgba(255,87,34,0.4)] text-[#FF8A65]"
                         : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.07)] text-[rgba(255,255,255,0.5)] hover:border-[rgba(255,255,255,0.15)]"
-                    )}
-                  >
-                    {g}
-                  </button>
+                    )}>{g}</button>
                 ))}
               </div>
             </div>
@@ -173,23 +224,16 @@ export function AssessmentForm({ defaultValues, isRetake }: Props) {
               <Label>Goals <span className="text-[rgba(255,255,255,0.3)] font-normal">(select all that apply)</span></Label>
               <div className="flex flex-wrap gap-2">
                 {GOALS.map((g) => (
-                  <button
-                    key={g}
-                    type="button"
-                    onClick={() => toggleGoal(g)}
+                  <button key={g} type="button" onClick={() => toggleGoal(g)}
                     className={cn(
                       "px-3 py-1.5 rounded-full text-[12px] font-medium border transition-all",
                       goals.includes(g)
                         ? "bg-[rgba(255,87,34,0.1)] border-[rgba(255,87,34,0.4)] text-[#FF8A65]"
                         : "bg-[rgba(255,255,255,0.03)] border-[rgba(255,255,255,0.07)] text-[rgba(255,255,255,0.5)] hover:border-[rgba(255,255,255,0.15)]"
-                    )}
-                  >
-                    {g}
-                  </button>
+                    )}>{g}</button>
                 ))}
               </div>
             </div>
-
             <SelectField label="Activity Level" value={activity} onChange={setActivity} options={ACTIVITY_LEVELS} />
             <SelectField label="Gym Access" value={gym} onChange={setGym} options={GYM_OPTIONS} />
           </div>
@@ -216,10 +260,9 @@ export function AssessmentForm({ defaultValues, isRetake }: Props) {
                 placeholder="e.g. Lower back pain, Left knee (comma-separated, or 'None')"
               />
               <p className="text-[11px] text-[rgba(255,255,255,0.3)]">
-                This helps your AI coach avoid recommending exercises that could worsen these.
+                This helps your AI coach avoid exercises that could worsen these.
               </p>
             </div>
-
             {error && (
               <p className="text-[13px] text-red-400 bg-red-500/10 border border-red-500/20 rounded-[6px] px-4 py-3">
                 {error}
@@ -248,7 +291,15 @@ export function AssessmentForm({ defaultValues, isRetake }: Props) {
               Continue →
             </button>
           ) : (
-            <SubmitButton isRetake={isRetake} />
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-[2] py-3.5 rounded-[10px] bg-[#FF5722] hover:bg-[#FF8A65] disabled:opacity-50 disabled:cursor-not-allowed text-white font-['Syne'] font-bold text-[14px] transition-colors min-h-[48px] flex items-center justify-center gap-2"
+            >
+              {submitting ? (
+                <><Loader2 size={16} className="animate-spin" /> Saving…</>
+              ) : isRetake ? "Update Assessment" : "Complete Assessment →"}
+            </button>
           )}
         </div>
       </form>
@@ -278,18 +329,5 @@ function SelectField({ label, value, onChange, options }: { label: string; value
         ))}
       </div>
     </div>
-  );
-}
-
-function SubmitButton({ isRetake }: { isRetake?: boolean }) {
-  const { pending } = useFormStatus();
-  return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="flex-[2] py-3.5 rounded-[10px] bg-[#FF5722] hover:bg-[#FF8A65] disabled:opacity-50 disabled:cursor-not-allowed text-white font-['Syne'] font-bold text-[14px] transition-colors min-h-[48px]"
-    >
-      {pending ? "Saving…" : isRetake ? "Update Assessment" : "Complete Assessment →"}
-    </button>
   );
 }
