@@ -59,20 +59,41 @@ export async function middleware(request: NextRequest) {
 
   // ── No session ──
   if (!user) {
+    // Clear stale role cache on logout
+    response.cookies.delete("farfit-role");
     if (isAuthRoute) return response;
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
-  // ── Has session — fetch role ──
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
+  // ── Has session — get role (cached in cookie to avoid a DB hit every request) ──
+  const VALID_ROLES = ["admin", "trainer", "client"] as const;
+  const cached = request.cookies.get("farfit-role")?.value ?? "";
+  const sepIdx = cached.indexOf(":");
+  const cachedUid  = cached.slice(0, sepIdx);
+  const cachedRole = cached.slice(sepIdx + 1) as Role;
 
-  const role = profile?.role as Role | undefined;
+  let role: Role | undefined;
+
+  if (cachedUid === user.id && VALID_ROLES.includes(cachedRole)) {
+    role = cachedRole;
+  } else {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+    role = profile?.role as Role | undefined;
+    if (role) {
+      response.cookies.set("farfit-role", `${user.id}:${role}`, {
+        path: "/",
+        maxAge: 3600,
+        httpOnly: true,
+        sameSite: "lax",
+      });
+    }
+  }
 
   // Logged-in user hitting /login → send to their dashboard
   if (isAuthRoute || pathname === "/") {

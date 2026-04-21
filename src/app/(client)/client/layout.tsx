@@ -85,7 +85,7 @@ export default async function ClientLayout({ children }: { children: React.React
   return (
     <div className="flex min-h-screen bg-[#050505] overflow-x-hidden">
       <ClientSidebar />
-      <main className="flex-1 overflow-y-auto pb-24 md:pb-0">
+      <main className="flex-1 overflow-y-auto md:pb-0" style={{ paddingBottom: "calc(6rem + env(safe-area-inset-bottom))" }}>
         <div className="md:hidden" style={{ height: "env(safe-area-inset-top)" }} aria-hidden="true" />
         <div className="px-4 md:px-10 py-6 md:py-10">
           {children}

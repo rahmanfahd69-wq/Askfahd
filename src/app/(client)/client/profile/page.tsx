@@ -6,6 +6,7 @@ import { ClientProfileForm } from "@/components/client/ClientProfileForm";
 import { getInitials } from "@/lib/utils";
 import type { Role } from "@/lib/supabase/types";
 import { Phone, AtSign, MessageCircle } from "lucide-react";
+import { LogoutButton } from "@/components/shared/LogoutButton";
 
 export default async function ClientProfile() {
   const supabase = await createClient();
@@ -133,6 +134,11 @@ export default async function ClientProfile() {
             diet_type:      clientData?.diet_type ?? null,
           }}
         />
+      </div>
+
+      {/* Sign out — visible on mobile (desktop has it in sidebar) */}
+      <div className="md:hidden pt-2 border-t border-[rgba(255,255,255,0.07)]">
+        <LogoutButton />
       </div>
     </div>
   );
