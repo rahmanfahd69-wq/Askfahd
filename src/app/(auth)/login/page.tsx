@@ -34,14 +34,19 @@ function LoginForm() {
     }, 10000);
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
+      console.log("[login] calling signInWithPassword for:", email.trim().toLowerCase());
+
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       });
 
+      console.log("[login] signInWithPassword result → data:", data, "error:", authError);
+
       clearTimeout(timeout);
 
       if (authError) {
+        console.log("[login] auth error, showing to user:", authError.message);
         setError(
           authError.message === "Invalid login credentials"
             ? "Incorrect email or password."
@@ -51,12 +56,15 @@ function LoginForm() {
         return;
       }
 
-      // Full page navigation ensures the new auth cookies are included in the
-      // request that hits middleware — router.push() alone can race with cookie
-      // writes and leave middleware seeing an unauthenticated request.
+      console.log("[login] success — session user id:", data.session?.user?.id, "role from meta:", data.user?.user_metadata?.role);
+      console.log("[login] redirecting to / via window.location.href");
+
+      // Full page navigation ensures auth cookies are committed before the
+      // request hits middleware. router.push() can race with cookie writes.
       window.location.href = "/";
-    } catch {
+    } catch (err) {
       clearTimeout(timeout);
+      console.error("[login] unexpected error:", err);
       setError("Something went wrong. Please try again.");
       setLoading(false);
     }
