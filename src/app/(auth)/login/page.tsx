@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
+  const router = useRouter();
   const params = useSearchParams();
   const supabase  = createClient();
 
@@ -51,9 +52,10 @@ function LoginForm() {
         return;
       }
 
-      // Full page navigation ensures auth cookies are committed before the
-      // request hits middleware. router.push() can race with cookie writes.
-      window.location.href = "/";
+      // refresh() re-syncs server components so middleware sees the new session
+      // cookie before push() fires the navigation.
+      router.refresh();
+      router.push("/");
     } catch (err) {
       clearTimeout(timeout);
       console.error("[login] unexpected error:", err);
