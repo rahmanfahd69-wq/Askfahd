@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,7 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
-  const router    = useRouter();
-  const params    = useSearchParams();
+  const params = useSearchParams();
   const supabase  = createClient();
 
   useEffect(() => {
@@ -28,24 +27,39 @@ function LoginForm() {
     setLoading(true);
     setError("");
 
-    const { error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim().toLowerCase(),
-      password,
-    });
-
-    if (authError) {
-      setError(
-        authError.message === "Invalid login credentials"
-          ? "Incorrect email or password."
-          : authError.message
-      );
+    // Safety net: unblock the button after 10s if something hangs
+    const timeout = setTimeout(() => {
       setLoading(false);
-      return;
-    }
+      setError("Login is taking too long — please try again.");
+    }, 10000);
 
-    // Middleware handles role-based redirect from "/"
-    router.push("/");
-    router.refresh();
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+
+      clearTimeout(timeout);
+
+      if (authError) {
+        setError(
+          authError.message === "Invalid login credentials"
+            ? "Incorrect email or password."
+            : authError.message
+        );
+        setLoading(false);
+        return;
+      }
+
+      // Full page navigation ensures the new auth cookies are included in the
+      // request that hits middleware — router.push() alone can race with cookie
+      // writes and leave middleware seeing an unauthenticated request.
+      window.location.href = "/";
+    } catch {
+      clearTimeout(timeout);
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
+    }
   }
 
   return (
