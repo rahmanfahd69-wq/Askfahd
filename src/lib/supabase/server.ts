@@ -20,8 +20,10 @@ export async function createClient() {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             );
-          } catch {
-            // setAll called from Server Component — cookies set in middleware instead
+          } catch (e) {
+            // cookies() is read-only in Server Components — expected.
+            // In Server Actions it MUST be writable; log loudly if not.
+            console.error("[supabase/server] setAll failed — session cookies not written:", e);
           }
         },
       },

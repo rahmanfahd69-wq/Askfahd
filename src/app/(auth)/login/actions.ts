@@ -24,16 +24,20 @@ export async function loginAction(
     };
   }
 
-  // Debug: confirm session and what cookies are now set
-  const cookieStore = await cookies();
-  const allCookies = cookieStore.getAll();
   console.log("[login action] session user:", data.session?.user?.id ?? "NO SESSION");
   console.log("[login action] session expires_at:", data.session?.expires_at ?? "N/A");
-  console.log("[login action] all cookies after login:", JSON.stringify(
-    allCookies.map(c => ({ name: c.name, valueLength: c.value.length }))
-  ));
+
+  // Explicitly verify Supabase actually wrote its cookies via setAll.
+  // If this shows no sb- cookies, the setAll in server.ts threw silently.
+  const cookieStore = await cookies();
+  const allCookies = cookieStore.getAll();
   const sbCookies = allCookies.filter(c => c.name.startsWith("sb-"));
-  console.log("[login action] sb- cookies:", sbCookies.map(c => c.name));
+  console.log("[login action] all cookie names after login:", allCookies.map(c => c.name));
+  if (sbCookies.length === 0) {
+    console.error("[login action] PROBLEM: no sb- cookies written — setAll failed or was never called");
+  } else {
+    console.log("[login action] sb- cookies written OK:", sbCookies.map(c => c.name));
+  }
 
   redirect("/");
 }
