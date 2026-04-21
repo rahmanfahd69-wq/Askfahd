@@ -1,68 +1,22 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { Suspense, useEffect, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
+import { loginAction } from "./actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 function LoginForm() {
-  const [email, setEmail]       = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError]       = useState("");
-  const [loading, setLoading]   = useState(false);
-  const router = useRouter();
+  const [state, formAction, isPending] = useActionState(loginAction, null);
   const params = useSearchParams();
-  const supabase  = createClient();
 
-  useEffect(() => {
-    if (params.get("error") === "auth_callback_failed") {
-      setError("Authentication failed. Please try again.");
-    }
-  }, [params]);
+  const callbackError =
+    params.get("error") === "auth_callback_failed"
+      ? "Authentication failed. Please try again."
+      : null;
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email || !password) return;
-    setLoading(true);
-    setError("");
-
-    // Safety net: unblock the button after 10s if something hangs
-    const timeout = setTimeout(() => {
-      setLoading(false);
-      setError("Login is taking too long — please try again.");
-    }, 10000);
-
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
-
-      clearTimeout(timeout);
-
-      if (authError) {
-        setError(
-          authError.message === "Invalid login credentials"
-            ? "Incorrect email or password."
-            : authError.message
-        );
-        setLoading(false);
-        return;
-      }
-
-      // refresh() re-syncs server components so middleware sees the new session
-      // cookie before push() fires the navigation.
-      router.refresh();
-      router.push("/");
-    } catch (err) {
-      clearTimeout(timeout);
-      console.error("[login] unexpected error:", err);
-      setError("Something went wrong. Please try again.");
-      setLoading(false);
-    }
-  }
+  const error = state?.error ?? callbackError ?? "";
 
   return (
     <div className="w-full max-w-[420px] animate-fade-up">
@@ -88,17 +42,16 @@ function LoginForm() {
           Your dashboard waits on the other side.
         </p>
 
-        <form onSubmit={handleLogin} className="flex flex-col gap-5">
+        <form action={formAction} className="flex flex-col gap-5">
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
+              name="email"
               type="email"
               autoComplete="email"
               placeholder="you@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
+              disabled={isPending}
               required
             />
           </div>
@@ -107,12 +60,11 @@ function LoginForm() {
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
+              name="password"
               type="password"
               autoComplete="current-password"
               placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
+              disabled={isPending}
               required
             />
           </div>
@@ -128,9 +80,9 @@ function LoginForm() {
             variant="primary"
             size="lg"
             className="w-full mt-1"
-            disabled={loading || !email || !password}
+            disabled={isPending}
           >
-            {loading ? (
+            {isPending ? (
               <span className="flex items-center gap-2">
                 <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                 Signing in…
@@ -145,7 +97,6 @@ function LoginForm() {
       <p className="text-center text-[12px] text-[rgba(255,255,255,0.2)] mt-6">
         Access is by invitation only. Contact your coach to get started.
       </p>
-
     </div>
   );
 }
