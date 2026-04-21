@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Dumbbell, ClipboardList, User, Phone, AtSign, MessageCircle, ChevronRight, Flame } from "lucide-react";
+import { Dumbbell, User, Phone, AtSign, MessageCircle, ChevronRight, Flame } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
 import type { Role } from "@/lib/supabase/types";
@@ -17,7 +17,7 @@ interface PlanContent {
 function getTodayWorkout(content: PlanContent) {
   const days = content.workout?.days || content.days || [];
   if (!days.length) return null;
-  const dow = new Date().getDay(); // 0=Sun … 6=Sat → map Mon=0 … Sun=6
+  const dow = new Date().getDay();
   const idx = dow === 0 ? 6 : dow - 1;
   const day = days[idx % days.length];
   return day ? { name: day.name, exercises: day.exercises?.length ?? 0 } : null;
@@ -47,10 +47,10 @@ export default async function ClientDashboard() {
   const profile = profileData as { full_name: string; role: Role } | null;
   if (profile?.role !== "client") redirect("/login");
 
-  const [clientRes, planRes, latestAssessmentRes] = await Promise.all([
+  const [clientRes, planRes] = await Promise.all([
     supabase
       .from("clients")
-      .select("trainer_id, onboarding_done, goals, pt_end_date")
+      .select("trainer_id, goals, pt_end_date")
       .eq("id", user.id)
       .single(),
     supabase
@@ -61,22 +61,10 @@ export default async function ClientDashboard() {
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle(),
-    supabase
-      .from("assessments")
-      .select("created_at")
-      .eq("client_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
   ]);
 
-  const clientData    = clientRes.data;
-  const activePlan    = planRes.data;
-  const lastAssessment = latestAssessmentRes.data;
-
-  const weeklyCheckInDue = clientData?.onboarding_done && lastAssessment
-    ? (Date.now() - new Date(lastAssessment.created_at).getTime()) > 7 * 24 * 60 * 60 * 1000
-    : false;
+  const clientData = clientRes.data;
+  const activePlan = planRes.data;
 
   let trainerName: string | null     = null;
   let trainerPhoto: string | null    = null;
@@ -110,7 +98,7 @@ export default async function ClientDashboard() {
 
   return (
     <div className="animate-fade-up space-y-6 max-w-2xl px-0 sm:px-0">
-      {/* ── Header ── */}
+      {/* Header */}
       <div>
         <h1 className="font-['Syne'] font-black text-[clamp(28px,5vw,40px)] leading-tight">
           Hey, <span className="text-[#FF5722]">{firstName}</span>
@@ -120,31 +108,7 @@ export default async function ClientDashboard() {
         </p>
       </div>
 
-      {/* ── Alerts ── */}
-      {!clientData?.onboarding_done && (
-        <div className="bg-[rgba(255,87,34,0.06)] border border-[rgba(255,87,34,0.2)] rounded-[14px] p-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="font-['Syne'] font-bold text-[14px] text-[#FF8A65] mb-1">Complete your assessment to get started</p>
-            <p className="text-[12px] text-[rgba(255,255,255,0.45)]">Complete your assessment to get started with your personalised plan.</p>
-          </div>
-          <Link href="/client/assessment/new" className="shrink-0 bg-[#FF5722] text-white font-['Syne'] font-bold text-[11px] uppercase tracking-[1.5px] px-4 py-2.5 rounded-[8px] hover:bg-[#FF8A65] transition-colors min-h-[44px] flex items-center">
-            Start →
-          </Link>
-        </div>
-      )}
-
-      {weeklyCheckInDue && (
-        <div className="bg-[rgba(96,165,250,0.06)] border border-[rgba(96,165,250,0.2)] rounded-[14px] p-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="font-['Syne'] font-bold text-[14px] text-blue-400 mb-1">Weekly check-in due</p>
-            <p className="text-[12px] text-[rgba(255,255,255,0.45)]">Update your stats so your AI coach and trainer stay accurate.</p>
-          </div>
-          <Link href="/client/assessment/new" className="shrink-0 bg-blue-500 text-white font-['Syne'] font-bold text-[11px] uppercase tracking-[1.5px] px-4 py-2.5 rounded-[8px] hover:bg-blue-400 transition-colors min-h-[44px] flex items-center">
-            Check in →
-          </Link>
-        </div>
-      )}
-
+      {/* PT expiry alert */}
       {ptDaysLeft !== null && ptDaysLeft <= 14 && ptDaysLeft >= 0 && (
         <div className="bg-[rgba(245,158,11,0.06)] border border-[rgba(245,158,11,0.15)] rounded-[14px] px-5 py-4">
           <p className="text-[13px] text-amber-400">
@@ -153,14 +117,13 @@ export default async function ClientDashboard() {
         </div>
       )}
 
-      {/* ── Today's Snapshot ── */}
+      {/* Today's Snapshot */}
       {activePlan ? (
         <div>
           <p className="text-[11px] font-['Syne'] font-bold uppercase tracking-[2px] text-[rgba(255,255,255,0.25)] mb-3">
             Today&apos;s Snapshot
           </p>
           <div className="grid grid-cols-2 gap-3">
-            {/* Today's workout */}
             <div className="bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[14px] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-[8px] bg-[rgba(255,87,34,0.1)] flex items-center justify-center shrink-0">
@@ -180,7 +143,6 @@ export default async function ClientDashboard() {
               )}
             </div>
 
-            {/* Daily macros */}
             <div className="bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[14px] p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-7 h-7 rounded-[8px] bg-[rgba(255,87,34,0.1)] flex items-center justify-center shrink-0">
@@ -206,16 +168,14 @@ export default async function ClientDashboard() {
           </div>
         </div>
       ) : (
-        clientData?.onboarding_done && (
-          <div className="bg-[rgba(255,255,255,0.018)] border border-dashed border-[rgba(255,255,255,0.07)] rounded-[14px] p-6 text-center">
-            <Dumbbell size={24} className="text-[rgba(255,87,34,0.3)] mx-auto mb-3" />
-            <p className="font-['Syne'] font-bold text-[14px] text-[rgba(255,255,255,0.4)]">Your coach will create your plan soon</p>
-            <p className="text-[12px] text-[rgba(255,255,255,0.25)] mt-1">Check back after your trainer reviews your assessment</p>
-          </div>
-        )
+        <div className="bg-[rgba(255,255,255,0.018)] border border-dashed border-[rgba(255,255,255,0.07)] rounded-[14px] p-6 text-center">
+          <Dumbbell size={24} className="text-[rgba(255,87,34,0.3)] mx-auto mb-3" />
+          <p className="font-['Syne'] font-bold text-[14px] text-[rgba(255,255,255,0.4)]">Your coach is preparing your plan</p>
+          <p className="text-[12px] text-[rgba(255,255,255,0.25)] mt-1">Check back soon — your personalised plan will appear here</p>
+        </div>
       )}
 
-      {/* ── Coach Card ── */}
+      {/* Coach Card */}
       {trainerName && (
         <div className="bg-[rgba(255,87,34,0.05)] border border-[rgba(255,87,34,0.18)] rounded-[14px] p-5 sm:p-6">
           <div className="flex items-center gap-4 mb-5">
@@ -262,12 +222,11 @@ export default async function ClientDashboard() {
         </div>
       )}
 
-      {/* ── Quick Nav ── */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Quick Nav */}
+      <div className="grid grid-cols-2 gap-3">
         {[
-          { href: "/client/plan",           icon: Dumbbell,      title: "My Plan",    desc: "Workouts & nutrition" },
-          { href: "/client/assessment/new", icon: ClipboardList, title: "Assessment", desc: "Update your stats"    },
-          { href: "/client/profile",        icon: User,          title: "Profile",    desc: "My info"              },
+          { href: "/client/plan",    icon: Dumbbell, title: "My Plan",  desc: "Workouts & nutrition" },
+          { href: "/client/profile", icon: User,     title: "Profile",  desc: "My info"              },
         ].map(({ href, icon: Icon, title, desc }) => (
           <Link
             key={href}

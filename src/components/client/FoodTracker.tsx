@@ -27,7 +27,6 @@ interface Props {
   today: string;
   initialLogs: FoodLog[];
   targets: Targets;
-  onboardingDone?: boolean;
 }
 
 interface NutritionEstimate {
@@ -117,7 +116,7 @@ function MacroBar({ label, consumed, target, color }: { label: string; consumed:
   );
 }
 
-export function FoodTracker({ today, initialLogs, targets, onboardingDone }: Props) {
+export function FoodTracker({ today, initialLogs, targets }: Props) {
   const [selectedDate, setSelectedDate] = useState(today);
   const [logs, setLogs]                 = useState<FoodLog[]>(initialLogs);
   const [showModal, setShowModal]       = useState(false);
@@ -314,9 +313,7 @@ export function FoodTracker({ today, initialLogs, targets, onboardingDone }: Pro
         <div className="bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[14px] p-6 text-center">
           <CalorieRing consumed={totalConsumed.calories} target={null} />
           <p className="text-[13px] text-[rgba(255,255,255,0.4)] mt-4">
-            {onboardingDone
-              ? "Your nutrition targets will appear once your plan is ready. You can still log food now."
-              : "Complete your assessment to get your nutrition targets."}
+            Your nutrition targets will appear once your plan is ready. You can still log food now.
           </p>
         </div>
       )}
