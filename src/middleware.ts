@@ -19,16 +19,6 @@ const ROLE_PREFIXES: Record<string, string> = {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Pass through static assets and Next.js internals
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/favicon") ||
-    pathname.includes(".")
-  ) {
-    return NextResponse.next();
-  }
-
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -55,13 +45,10 @@ export async function middleware(request: NextRequest) {
   // Refresh session — essential so tokens are rotated
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isAuthRoute = pathname === "/login" || pathname === "/auth/callback";
-
   // ── No session ──
   if (!user) {
-    // Clear stale role cache on logout
+    // Clear stale role cache so next login starts fresh
     response.cookies.delete("farfit-role");
-    if (isAuthRoute) return response;
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
@@ -95,11 +82,10 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // Logged-in user hitting /login → send to their dashboard
-  if (isAuthRoute || pathname === "/") {
-    const home = role ? ROLE_HOME[role] : "/login";
+  // ── Logged-in user hitting / → send to their dashboard ──
+  if (pathname === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = home;
+    url.pathname = role ? ROLE_HOME[role] : "/login";
     return NextResponse.redirect(url);
   }
 
@@ -120,7 +106,10 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
+  // Exclude /login and /auth/callback from middleware entirely — they must
+  // never be intercepted or the redirect-to-login guard creates an infinite loop.
+  // Also exclude _next internals, API routes, and static files.
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!login|auth/callback|_next/static|_next/image|favicon\\.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
