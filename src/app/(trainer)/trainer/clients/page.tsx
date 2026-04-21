@@ -28,7 +28,7 @@ export default async function TrainerClients() {
 
   const { data: clients } = await supabase
     .from("clients")
-    .select("id, is_active, pt_start_date, pt_end_date, goals, updated_at")
+    .select("id, is_active, pt_start_date, pt_end_date, goals, last_active_at, created_at")
     .eq("trainer_id", user.id)
     .order("created_at", { ascending: false });
 
@@ -115,7 +115,9 @@ export default async function TrainerClients() {
                     <p className={`text-[12px] font-medium ${pt.textColor}`}>{pt.label}</p>
                   </div>
                   <p className="text-[11px] text-[rgba(255,255,255,0.2)]">
-                    {new Date(client.updated_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                    {client.last_active_at
+                      ? `Active ${new Date(client.last_active_at).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}`
+                      : "Never logged in"}
                   </p>
                 </div>
 

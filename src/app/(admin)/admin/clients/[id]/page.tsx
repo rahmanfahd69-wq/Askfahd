@@ -31,7 +31,7 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
     height_cm: number | null; weight_kg: number | null; goals: string[];
     activity_level: string | null; gym_access: string | null; diet_type: string | null;
     sleep_hours: string | null; stress_level: string | null; work_hours: string | null;
-    injuries: string[]; onboarding_done: boolean; is_active: boolean;
+    injuries: string[]; is_active: boolean;
   };
   type TrainerOption = { id: string; profiles: { full_name: string } | null };
 
@@ -76,7 +76,6 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
             <Badge variant={profile.is_active ? "success" : "destructive"}>
               {profile.is_active ? "Active" : "Inactive"}
             </Badge>
-            {client.onboarding_done && <Badge variant="default">Assessed</Badge>}
           </div>
           <p className="text-[13px] text-[rgba(255,255,255,0.4)] mt-1">{profile.email}</p>
           <p className="text-[12px] text-[rgba(255,255,255,0.3)] mt-1">Joined {formatDate(profile.created_at)}</p>
@@ -95,11 +94,11 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Biometrics */}
-        {client.onboarding_done ? (
-          <div className="bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[12px] p-6">
-            <p className="font-['Syne'] text-[11px] font-bold uppercase tracking-[2px] text-[rgba(255,255,255,0.4)] mb-5">
-              Biometrics & Lifestyle
-            </p>
+        <div className="bg-[rgba(255,255,255,0.028)] border border-[rgba(255,255,255,0.07)] rounded-[12px] p-6">
+          <p className="font-['Syne'] text-[11px] font-bold uppercase tracking-[2px] text-[rgba(255,255,255,0.4)] mb-5">
+            Biometrics & Lifestyle
+          </p>
+          {bio.filter(b => b.value).length > 0 ? (
             <div className="grid grid-cols-2 gap-3">
               {bio.filter(b => b.value).map(({ label, value }) => (
                 <div key={label}>
@@ -108,30 +107,28 @@ export default async function ClientDetailPage({ params }: { params: Promise<{ i
                 </div>
               ))}
             </div>
-            {client.goals.length > 0 && (
-              <div className="mt-4">
-                <p className="text-[10px] font-['Syne'] font-bold uppercase tracking-[1.5px] text-[rgba(255,255,255,0.3)] mb-2">Goals</p>
-                <div className="flex flex-wrap gap-1">
-                  {client.goals.map((g) => <Badge key={g} variant="secondary">{g}</Badge>)}
-                </div>
+          ) : (
+            <p className="text-[13px] text-[rgba(255,255,255,0.3)]">No biometrics on file.</p>
+          )}
+          {client.goals.length > 0 && (
+            <div className="mt-4">
+              <p className="text-[10px] font-['Syne'] font-bold uppercase tracking-[1.5px] text-[rgba(255,255,255,0.3)] mb-2">Goals</p>
+              <div className="flex flex-wrap gap-1">
+                {client.goals.map((g) => <Badge key={g} variant="secondary">{g}</Badge>)}
               </div>
-            )}
-            {client.injuries.filter((i) => i !== "None").length > 0 && (
-              <div className="mt-4">
-                <p className="text-[10px] font-['Syne'] font-bold uppercase tracking-[1.5px] text-[rgba(255,255,255,0.3)] mb-2">Injuries</p>
-                <div className="flex flex-wrap gap-1">
-                  {client.injuries.filter((i) => i !== "None").map((inj) => (
-                    <Badge key={inj} variant="destructive">{inj}</Badge>
-                  ))}
-                </div>
+            </div>
+          )}
+          {client.injuries.filter((i) => i !== "None").length > 0 && (
+            <div className="mt-4">
+              <p className="text-[10px] font-['Syne'] font-bold uppercase tracking-[1.5px] text-[rgba(255,255,255,0.3)] mb-2">Injuries</p>
+              <div className="flex flex-wrap gap-1">
+                {client.injuries.filter((i) => i !== "None").map((inj) => (
+                  <Badge key={inj} variant="destructive">{inj}</Badge>
+                ))}
               </div>
-            )}
-          </div>
-        ) : (
-          <div className="bg-[rgba(255,255,255,0.028)] border border-dashed border-[rgba(255,255,255,0.07)] rounded-[12px] p-6 flex items-center justify-center">
-            <p className="text-[13px] text-[rgba(255,255,255,0.3)]">Assessment not completed yet.</p>
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         {/* Management */}
         <ClientDetailForm

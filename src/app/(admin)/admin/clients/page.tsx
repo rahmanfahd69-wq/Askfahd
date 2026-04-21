@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
-import { CreateClientModal } from "@/components/admin/CreateClientModal";
 import { Badge } from "@/components/ui/badge";
 import { getInitials, formatDate } from "@/lib/utils";
 
@@ -17,7 +16,7 @@ export default async function ClientsPage() {
   const [{ data: clientsData }, { data: trainersData }] = await Promise.all([
     supabase
       .from("clients")
-      .select("id, trainer_id, onboarding_done, is_active, profiles(full_name, email, created_at), trainers(profiles(full_name))")
+      .select("id, trainer_id, is_active, profiles(full_name, email, created_at), trainers(profiles(full_name))")
       .order("created_at", { referencedTable: "profiles", ascending: false }),
     supabase
       .from("trainers")
@@ -26,7 +25,7 @@ export default async function ClientsPage() {
   ]);
 
   type ClientRow = {
-    id: string; trainer_id: string | null; onboarding_done: boolean; is_active: boolean;
+    id: string; trainer_id: string | null; is_active: boolean;
     profiles: { full_name: string; email: string; created_at: string } | null;
     trainers: { profiles: { full_name: string } | null } | null;
   };
@@ -41,15 +40,12 @@ export default async function ClientsPage() {
 
   return (
     <div className="animate-fade-up">
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <p className="text-[11px] font-['Syne'] font-bold uppercase tracking-[3px] text-[rgba(255,87,34,0.7)] mb-2">Admin</p>
-          <h1 className="font-['Syne'] font-black text-[32px]">Clients</h1>
-          <p className="text-[14px] text-[rgba(255,255,255,0.4)] mt-1">
-            {clients.length} client{clients.length !== 1 ? "s" : ""} on the platform
-          </p>
-        </div>
-        <CreateClientModal trainers={trainerOptions} />
+      <div className="mb-8">
+        <p className="text-[11px] font-['Syne'] font-bold uppercase tracking-[3px] text-[rgba(255,87,34,0.7)] mb-2">Admin</p>
+        <h1 className="font-['Syne'] font-black text-[32px]">Clients</h1>
+        <p className="text-[14px] text-[rgba(255,255,255,0.4)] mt-1">
+          {clients.length} client{clients.length !== 1 ? "s" : ""} on the platform
+        </p>
       </div>
 
       {clients.length === 0 ? (
@@ -85,11 +81,10 @@ export default async function ClientsPage() {
               <p className="text-[13px] text-[rgba(255,255,255,0.5)] truncate">
                 {c.trainers?.profiles?.full_name ?? <span className="text-[rgba(255,255,255,0.25)]">Unassigned</span>}
               </p>
-              <div className="flex flex-col gap-1">
+              <div>
                 <Badge variant={c.is_active ? "success" : "destructive"}>
                   {c.is_active ? "Active" : "Off"}
                 </Badge>
-                {c.onboarding_done && <Badge variant="secondary">Assessed</Badge>}
               </div>
               <ChevronRight size={14} className="text-[rgba(255,255,255,0.2)] group-hover:text-[#FF5722] transition-colors justify-self-end" />
             </Link>

@@ -13,7 +13,7 @@ export async function createClient_(formData: FormData) {
     return { error: "Name, email and password are required." };
   }
 
-  const admin = await createAdminClient();
+  const admin = createAdminClient();
 
   const { data, error } = await admin.auth.admin.createUser({
     email,
@@ -22,15 +22,27 @@ export async function createClient_(formData: FormData) {
     user_metadata: { full_name: fullName, role: "client" },
   });
 
-  if (error) return { error: error.message };
+  if (error) {
+    console.error("[admin createClient_] auth.createUser error:", error);
+    return { error: error.message };
+  }
 
-  // Assign trainer if provided
-  if (trainerId) {
-    const { error: updateError } = await admin
-      .from("clients")
-      .update({ trainer_id: trainerId })
-      .eq("id", data.user.id);
-    if (updateError) return { error: updateError.message };
+  // Upsert profiles row (trigger may create it; upsert ensures correct name)
+  const { error: profileError } = await admin
+    .from("profiles")
+    .upsert({ id: data.user.id, role: "client", full_name: fullName, email }, { onConflict: "id" });
+  if (profileError) {
+    console.error("[admin createClient_] profiles upsert error:", profileError);
+    return { error: profileError.message };
+  }
+
+  // Upsert clients row — assign trainer if provided
+  const { error: clientError } = await admin
+    .from("clients")
+    .upsert({ id: data.user.id, ...(trainerId ? { trainer_id: trainerId } : {}) }, { onConflict: "id" });
+  if (clientError) {
+    console.error("[admin createClient_] clients upsert error:", clientError);
+    return { error: clientError.message };
   }
 
   revalidatePath("/admin/clients");

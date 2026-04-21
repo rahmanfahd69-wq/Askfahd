@@ -8,39 +8,66 @@ export async function createClientForTrainer(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: "Unauthorized" };
 
-  const email       = formData.get("email") as string;
-  const password    = formData.get("password") as string;
-  const fullName    = formData.get("full_name") as string;
-  const goals       = (formData.get("goals") as string || "").split(",").map((s) => s.trim()).filter(Boolean);
-  const injuries    = (formData.get("injuries") as string || "").split(",").map((s) => s.trim()).filter(Boolean);
-  const notes       = formData.get("notes") as string;
-  const ptStart     = formData.get("pt_start_date") as string;
-  const ptEnd       = formData.get("pt_end_date") as string;
+  const email    = formData.get("email") as string;
+  const password = formData.get("password") as string;
+  const fullName = formData.get("full_name") as string;
+  const goals    = (formData.get("goals") as string || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const injuries = (formData.get("injuries") as string || "").split(",").map((s) => s.trim()).filter(Boolean);
+  const notes    = (formData.get("notes") as string) || null;
+  const ptStart  = (formData.get("pt_start_date") as string) || null;
+  const ptEnd    = (formData.get("pt_end_date") as string) || null;
+  const age      = formData.get("age") ? Number(formData.get("age")) : null;
+  const gender   = (formData.get("gender") as string) || null;
+  const heightCm = formData.get("height_cm") ? Number(formData.get("height_cm")) : null;
+  const weightKg = formData.get("weight_kg") ? Number(formData.get("weight_kg")) : null;
 
   if (!email || !password || !fullName) return { error: "Name, email, and password are required." };
 
-  const admin = await createAdminClient();
-  const { data, error } = await admin.auth.admin.createUser({
+  const admin = createAdminClient();
+
+  // 1. Create auth user
+  const { data, error: authError } = await admin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
     user_metadata: { full_name: fullName, role: "client" },
   });
-  if (error) return { error: error.message };
+  if (authError) {
+    console.error("[createClientForTrainer] auth.createUser error:", authError);
+    return { error: authError.message };
+  }
 
-  const { error: updateError } = await admin
+  const clientId = data.user.id;
+
+  // 2. Upsert profiles row — the trigger creates it, upsert ensures correct name if trigger raced
+  const { error: profileError } = await admin
+    .from("profiles")
+    .upsert({ id: clientId, role: "client", full_name: fullName, email }, { onConflict: "id" });
+  if (profileError) {
+    console.error("[createClientForTrainer] profiles upsert error:", profileError);
+    return { error: profileError.message };
+  }
+
+  // 3. Upsert clients row — trigger creates (id) only; we need to set trainer_id + all details
+  const { error: clientError } = await admin
     .from("clients")
-    .update({
+    .upsert({
+      id: clientId,
       trainer_id: user.id,
       goals,
       injuries,
-      notes: notes || null,
-      pt_start_date: ptStart || null,
-      pt_end_date: ptEnd || null,
-    })
-    .eq("id", data.user.id);
-
-  if (updateError) return { error: updateError.message };
+      notes,
+      pt_start_date: ptStart,
+      pt_end_date: ptEnd,
+      age,
+      gender,
+      height_cm: heightCm,
+      weight_kg: weightKg,
+    }, { onConflict: "id" });
+  if (clientError) {
+    console.error("[createClientForTrainer] clients upsert error:", clientError);
+    return { error: clientError.message };
+  }
 
   revalidatePath("/trainer/clients");
   return { success: true };
