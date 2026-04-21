@@ -19,6 +19,14 @@ const ROLE_PREFIXES: Record<string, string> = {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Debug: log every cookie arriving at middleware
+  const allIncoming = request.cookies.getAll();
+  console.log("[middleware] path:", pathname);
+  console.log("[middleware] all cookies:", JSON.stringify(
+    allIncoming.map(c => ({ name: c.name, valueLength: c.value.length }))
+  ));
+  console.log("[middleware] sb- cookies:", allIncoming.filter(c => c.name.startsWith("sb-")).map(c => c.name));
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
