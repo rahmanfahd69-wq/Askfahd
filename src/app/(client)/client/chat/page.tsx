@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { ChatInterface } from "@/components/client/ChatInterface";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { getInitials } from "@/lib/utils";
@@ -35,15 +34,9 @@ export default async function ClientChat() {
           <MessageCircle size={24} className="text-[rgba(255,87,34,0.4)]" />
         </div>
         <h2 className="font-['Syne'] font-black text-[22px] mb-2">Chat locked</h2>
-        <p className="text-[14px] text-[rgba(255,255,255,0.45)] max-w-xs mb-6">
-          Complete your assessment first so your AI coach can give you personalised advice.
+        <p className="text-[14px] text-[rgba(255,255,255,0.45)] max-w-xs">
+          Your trainer is still setting up your profile. Check back soon.
         </p>
-        <Link
-          href="/client/assessment/new"
-          className="bg-[#FF5722] text-white font-['Syne'] font-bold text-[14px] px-6 py-3.5 rounded-[10px] hover:bg-[#FF8A65] transition-colors"
-        >
-          Complete Assessment →
-        </Link>
       </div>
     );
   }

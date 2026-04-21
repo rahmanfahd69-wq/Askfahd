@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { PlanView } from "@/components/client/PlanView";
 import type { Role } from "@/lib/supabase/types";
 import { Download } from "lucide-react";
@@ -55,19 +54,11 @@ export default async function ClientPlan() {
       </div>
 
       {!client?.onboarding_done && (
-        <div className="bg-[rgba(255,87,34,0.06)] border border-[rgba(255,87,34,0.2)] rounded-[14px] p-5 flex items-center justify-between gap-4">
-          <div>
-            <p className="font-['Syne'] font-bold text-[14px] text-[#FF8A65] mb-1">Complete your assessment first</p>
-            <p className="text-[12px] text-[rgba(255,255,255,0.45)]">
-              Your trainer needs your details to build a personalised plan.
-            </p>
-          </div>
-          <Link
-            href="/client/assessment/new"
-            className="shrink-0 bg-[#FF5722] text-white font-['Syne'] font-bold text-[11px] uppercase tracking-[1.5px] px-4 py-2.5 rounded-[8px] hover:bg-[#FF8A65] transition-colors min-h-[44px] flex items-center"
-          >
-            Start →
-          </Link>
+        <div className="bg-[rgba(255,87,34,0.06)] border border-[rgba(255,87,34,0.2)] rounded-[14px] p-5">
+          <p className="font-['Syne'] font-bold text-[14px] text-[#FF8A65] mb-1">Plan coming soon</p>
+          <p className="text-[12px] text-[rgba(255,255,255,0.45)]">
+            Your trainer is setting up your profile. Your personalised plan will appear here once it&apos;s ready.
+          </p>
         </div>
       )}
 

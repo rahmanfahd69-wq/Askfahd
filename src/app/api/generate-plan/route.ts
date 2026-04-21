@@ -10,7 +10,6 @@ export async function POST(req: NextRequest) {
     const { clientId, planType = "full" } = await req.json();
     if (!clientId) return NextResponse.json({ error: "clientId required" }, { status: 400 });
 
-    // Verify trainer owns this client
     const { data: trainer } = await supabase.from("trainers").select("id, ai_name").eq("id", user.id).single();
     if (!trainer) return NextResponse.json({ error: "Trainer not found" }, { status: 403 });
 
@@ -26,40 +25,10 @@ export async function POST(req: NextRequest) {
     const { data: clientProfile } = await supabase.from("profiles").select("full_name").eq("id", clientId).single();
     const clientName = clientProfile?.full_name || "Client";
 
-    const prompt = buildPlanPrompt({ clientName, client, planType });
+    const planContent = await generatePlanWithRetry({ clientName, client, planType });
 
-    const anthropicRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY!,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4096,
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!anthropicRes.ok) {
-      const err = await anthropicRes.text();
-      console.error("Anthropic error:", err);
-      return NextResponse.json({ error: "AI service error. Please try again." }, { status: 500 });
-    }
-
-    const result = await anthropicRes.json();
-    const rawText = result.content?.[0]?.text || "";
-
-    // Extract JSON from response
-    const jsonMatch = rawText.match(/```json\n?([\s\S]*?)\n?```/) || rawText.match(/(\{[\s\S]*\})/);
-    if (!jsonMatch) return NextResponse.json({ error: "Could not parse plan from AI response" }, { status: 500 });
-
-    let planContent: Record<string, unknown>;
-    try {
-      planContent = JSON.parse(jsonMatch[1]);
-    } catch {
-      return NextResponse.json({ error: "Invalid plan format from AI" }, { status: 500 });
+    if (!planContent) {
+      return NextResponse.json({ error: "AI returned an unreadable response. Please try again." }, { status: 500 });
     }
 
     const planTitle = `${clientName}'s ${planType === "full" ? "Full" : planType === "workout" ? "Workout" : "Nutrition"} Plan`;
@@ -94,27 +63,109 @@ export async function POST(req: NextRequest) {
   }
 }
 
+async function callAI(prompt: string): Promise<string> {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": process.env.ANTHROPIC_API_KEY!,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 4096,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    console.error("[generate-plan] Anthropic HTTP error:", err);
+    throw new Error("AI service error");
+  }
+
+  const data = await res.json();
+  return data.content?.[0]?.text || "";
+}
+
+function extractJson(rawText: string): Record<string, unknown> | null {
+  const trimmed = rawText.trim();
+
+  // 1. Direct parse (model returned raw JSON as instructed)
+  try {
+    return JSON.parse(trimmed);
+  } catch { /* fall through */ }
+
+  // 2. Strip code fences if present: ```json ... ``` or ``` ... ```
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+  if (fenced) {
+    try {
+      return JSON.parse(fenced[1]);
+    } catch { /* fall through */ }
+  }
+
+  // 3. Extract the outermost { ... } block
+  const braceStart = trimmed.indexOf("{");
+  const braceEnd   = trimmed.lastIndexOf("}");
+  if (braceStart !== -1 && braceEnd > braceStart) {
+    try {
+      return JSON.parse(trimmed.slice(braceStart, braceEnd + 1));
+    } catch { /* fall through */ }
+  }
+
+  return null;
+}
+
+async function generatePlanWithRetry(opts: {
+  clientName: string;
+  planType: string;
+  client: Record<string, unknown>;
+}): Promise<Record<string, unknown> | null> {
+  const { clientName, client, planType } = opts;
+
+  // First attempt — detailed prompt
+  const firstPrompt = buildPlanPrompt({ clientName, client, planType });
+  const firstRaw = await callAI(firstPrompt);
+  const firstResult = extractJson(firstRaw);
+
+  if (firstResult) return firstResult;
+
+  // Parsing failed — log what we got and retry with a stricter prompt
+  console.error("[generate-plan] First attempt parse failed. Raw response (first 1000 chars):", firstRaw.slice(0, 1000));
+
+  const retryPrompt = buildRetryPrompt({ clientName, client, planType });
+  const retryRaw = await callAI(retryPrompt);
+  const retryResult = extractJson(retryRaw);
+
+  if (!retryResult) {
+    console.error("[generate-plan] Retry also failed. Raw response (first 1000 chars):", retryRaw.slice(0, 1000));
+  }
+
+  return retryResult;
+}
+
+function buildRetryPrompt(opts: { clientName: string; planType: string; client: Record<string, unknown> }): string {
+  const { clientName, client, planType } = opts;
+  const schema = getPlanSchema(planType);
+  return `You must respond with ONLY a valid JSON object. No text before it, no text after it, no markdown, no code fences, no explanation. Just the raw JSON.
+
+Generate a ${planType} fitness plan for ${clientName} (${client.age ?? "?"}yo ${client.gender ?? ""}, goals: ${Array.isArray(client.goals) ? client.goals.join(", ") : client.goals ?? "general fitness"}).
+
+Use this exact schema:
+${schema}`;
+}
+
 function buildPlanPrompt(opts: {
   clientName: string;
   planType: string;
-  client: {
-    age?: number | null;
-    gender?: string | null;
-    height_cm?: number | null;
-    weight_kg?: number | null;
-    goals?: string[];
-    activity_level?: string | null;
-    gym_access?: string | null;
-    diet_type?: string | null;
-    sleep_hours?: string | null;
-    stress_level?: string | null;
-    work_hours?: string | null;
-    injuries?: string[];
-    notes?: string | null;
-  };
+  client: Record<string, unknown>;
 }): string {
   const { clientName, client, planType } = opts;
+  const schema = getPlanSchema(planType);
+
   return `Generate a professional, personalised fitness ${planType === "nutrition" ? "nutrition" : planType === "workout" ? "workout" : "full fitness"} plan for this client.
+
+IMPORTANT: Your entire response must be a single raw JSON object. Do NOT wrap it in code fences. Do NOT add any text before or after the JSON. Output ONLY the JSON object itself.
 
 CLIENT PROFILE:
 Name: ${clientName}
@@ -122,33 +173,41 @@ Age: ${client.age ?? "Unknown"}
 Gender: ${client.gender ?? "Unknown"}
 Height: ${client.height_cm ? `${client.height_cm} cm` : "Unknown"}
 Weight: ${client.weight_kg ? `${client.weight_kg} kg` : "Unknown"}
-Goals: ${client.goals?.join(", ") || "General fitness"}
+Goals: ${Array.isArray(client.goals) ? client.goals.join(", ") : client.goals || "General fitness"}
 Activity Level: ${client.activity_level ?? "Moderate"}
 Gym Access: ${client.gym_access ?? "Full gym"}
 Diet Type: ${client.diet_type ?? "No restriction"}
 Sleep: ${client.sleep_hours ?? "7-8 hours"}
 Stress Level: ${client.stress_level ?? "Moderate"}
 Work Hours: ${client.work_hours ?? "Full-time"}
-Injuries/Limitations: ${client.injuries?.length ? client.injuries.join(", ") : "None"}
+Injuries/Limitations: ${Array.isArray(client.injuries) && client.injuries.length ? client.injuries.join(", ") : "None"}
 Medical Notes: ${client.notes ?? "None"}
 
-Return ONLY valid JSON in this exact structure (no other text):
-${planType === "nutrition" ? `\`\`\`json
-{
+JSON SCHEMA TO FOLLOW EXACTLY:
+${schema}
+
+Remember: raw JSON only. No markdown. No code fences. No explanation. Never include exercises that aggravate injuries.`;
+}
+
+function getPlanSchema(planType: string): string {
+  if (planType === "nutrition") {
+    return `{
   "summary": "Brief overview of the nutrition plan",
   "daily_calories": 2000,
   "macros": { "protein_g": 150, "carbs_g": 200, "fats_g": 70 },
   "meals": [
     { "name": "Breakfast", "time": "7:00 AM", "foods": [{"item": "Oatmeal", "amount": "80g", "calories": 290}], "total_calories": 450 },
-    { "name": "Lunch", "time": "12:30 PM", "foods": [{"item": "Grilled chicken breast", "amount": "150g", "calories": 250}], "total_calories": 650 },
-    { "name": "Dinner", "time": "7:00 PM", "foods": [{"item": "Salmon fillet", "amount": "200g", "calories": 400}], "total_calories": 700 }
+    { "name": "Lunch", "time": "12:30 PM", "foods": [{"item": "Chicken breast", "amount": "150g", "calories": 250}], "total_calories": 650 },
+    { "name": "Dinner", "time": "7:00 PM", "foods": [{"item": "Rice and dal", "amount": "200g", "calories": 400}], "total_calories": 700 }
   ],
   "hydration": "2.5-3L water daily",
-  "supplements": ["Protein powder post-workout", "Vitamin D 1000IU"],
+  "supplements": ["Protein powder post-workout"],
   "tips": ["Meal prep on Sundays", "Eat within 30 min post-workout"]
-}
-\`\`\`` : planType === "workout" ? `\`\`\`json
-{
+}`;
+  }
+
+  if (planType === "workout") {
+    return `{
   "summary": "Brief overview of the workout plan",
   "duration_weeks": 4,
   "frequency": "4 days/week",
@@ -158,16 +217,17 @@ ${planType === "nutrition" ? `\`\`\`json
       "type": "Strength",
       "warmup": "5 min light cardio + shoulder circles",
       "exercises": [
-        { "name": "Bench Press", "sets": 4, "reps": "8-10", "rest": "90s", "notes": "Control the descent" },
-        { "name": "Overhead Press", "sets": 3, "reps": "10-12", "rest": "60s", "notes": "" }
+        { "name": "Bench Press", "sets": 4, "reps": "8-10", "rest": "90s", "notes": "Control the descent" }
       ],
       "cooldown": "5 min stretching"
     }
   ],
   "tips": ["Track weights each session", "Sleep 7-8 hours for recovery"]
-}
-\`\`\`` : `\`\`\`json
-{
+}`;
+  }
+
+  // full
+  return `{
   "summary": "Brief overview of the full plan",
   "duration_weeks": 4,
   "workout": {
@@ -197,10 +257,7 @@ ${planType === "nutrition" ? `\`\`\`json
     "sleep_target": "7-8 hours",
     "rest_days": ["Wednesday", "Saturday", "Sunday"],
     "tips": ["Foam roll daily", "10 min post-workout stretching"],
-    "active_recovery": "Light walk or swimming on rest days"
+    "active_recovery": "Light walk on rest days"
   }
-}
-\`\`\``}
-
-Be specific, realistic, and tailored to the client's profile. Never include exercises that would aggravate their injuries.`;
+}`;
 }
