@@ -42,8 +42,17 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session — essential so tokens are rotated
-  const { data: { user } } = await supabase.auth.getUser();
+  // Use getSession() — reads from cookie with no network call, so it never
+  // fails due to a Supabase auth server timeout. getUser() (which makes a
+  // live HTTP request to verify the JWT) belongs in pages/server actions
+  // where cryptographic verification matters, not in every middleware hop.
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+  if (sessionError) {
+    console.error("[middleware] getSession error:", sessionError.message);
+  }
+
+  const user = session?.user ?? null;
 
   // ── No session ──
   if (!user) {
@@ -66,11 +75,16 @@ export async function middleware(request: NextRequest) {
   if (cachedUid === user.id && VALID_ROLES.includes(cachedRole)) {
     role = cachedRole;
   } else {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .select("role")
       .eq("id", user.id)
       .single();
+
+    if (profileError) {
+      console.error("[middleware] profiles lookup error:", profileError.message);
+    }
+
     role = profile?.role as Role | undefined;
     if (role) {
       response.cookies.set("farfit-role", `${user.id}:${role}`, {

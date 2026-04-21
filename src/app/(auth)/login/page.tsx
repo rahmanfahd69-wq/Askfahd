@@ -12,7 +12,6 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
   const [loading, setLoading]   = useState(false);
-  const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null);
   const params = useSearchParams();
   const supabase  = createClient();
 
@@ -35,32 +34,14 @@ function LoginForm() {
     }, 10000);
 
     try {
-      console.log("[login] calling signInWithPassword for:", email.trim().toLowerCase());
-
       const { data, error: authError } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       });
 
-      console.log("[login] signInWithPassword result → data:", data, "error:", authError);
-
       clearTimeout(timeout);
 
-      const debug = {
-        attempted_email: email.trim().toLowerCase(),
-        timestamp: new Date().toISOString(),
-        error: authError ? { message: authError.message, status: authError.status, name: authError.name } : null,
-        session_exists: !!data.session,
-        user_id: data.user?.id ?? null,
-        user_email: data.user?.email ?? null,
-        user_role_meta: data.user?.user_metadata?.role ?? null,
-        email_confirmed: data.user?.email_confirmed_at ?? null,
-        next_step: authError ? "show_error" : "redirect_to_/",
-      };
-      setDebugInfo(debug);
-
       if (authError) {
-        console.log("[login] auth error, showing to user:", authError.message);
         setError(
           authError.message === "Invalid login credentials"
             ? "Incorrect email or password."
@@ -70,15 +51,12 @@ function LoginForm() {
         return;
       }
 
-      console.log("[login] success — user id:", data.user?.id, "redirecting via window.location.href = '/'");
-
       // Full page navigation ensures auth cookies are committed before the
       // request hits middleware. router.push() can race with cookie writes.
       window.location.href = "/";
     } catch (err) {
       clearTimeout(timeout);
       console.error("[login] unexpected error:", err);
-      setDebugInfo({ unexpected_error: String(err), timestamp: new Date().toISOString() });
       setError("Something went wrong. Please try again.");
       setLoading(false);
     }
@@ -166,15 +144,6 @@ function LoginForm() {
         Access is by invitation only. Contact your coach to get started.
       </p>
 
-      {/* ── TEMPORARY DEBUG PANEL — remove before launch ── */}
-      {debugInfo && (
-        <div className="mt-6 rounded-[10px] border border-yellow-500/30 bg-yellow-500/5 p-4">
-          <p className="text-[10px] font-bold uppercase tracking-[2px] text-yellow-400 mb-2">Debug Output</p>
-          <pre className="text-[11px] text-yellow-200/80 whitespace-pre-wrap break-all leading-relaxed">
-            {JSON.stringify(debugInfo, null, 2)}
-          </pre>
-        </div>
-      )}
     </div>
   );
 }
